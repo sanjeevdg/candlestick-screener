@@ -1,5 +1,8 @@
 flask
+flask-cors
+requests
 TA-Lib
 pandas
 yfinance
 gunicorn
+
