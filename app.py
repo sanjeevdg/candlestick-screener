@@ -72,6 +72,11 @@ def snapshot():
     # placeholder for future functionality if needed
     return jsonify({"code": "success"})
 
+@app.route("/")
+def home():
+    return "Hello from Flask on Render!"
+
+
 
 # --- Main entry point for local testing ---
 if __name__ == "__main__":
