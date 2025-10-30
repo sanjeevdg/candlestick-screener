@@ -1,15 +1,15 @@
-import os
-import pandas as pd
 from flask import Flask, jsonify
 from flask_cors import CORS
+import os
+import pandas as pd
+import csv
 
 app = Flask(__name__)
+CORS(app)
+# -------------------------------
+# Core logic
+# -------------------------------
 
-# ✅ Enable CORS for your React frontend (adjust origin if needed)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-
-
-# --- Chart logic ---
 def is_consolidating(df, percentage=2):
     if len(df) < 15:
         return False
@@ -26,60 +26,79 @@ def is_breaking_out(df, percentage=2.5):
         return False
 
     last_close = df.iloc[-1]['Close']
+
     if is_consolidating(df.iloc[:-1], percentage=percentage):
         recent_closes = df.iloc[-16:-1]
         if last_close > recent_closes['Close'].max():
             return True
+
     return False
 
 
-# --- API Routes ---
-@app.route("/api/breakouts")
+# -------------------------------
+# Helper: Load symbols & names
+# -------------------------------
+def load_symbol_names():
+    symbols = {}
+    symbols_path = "datasets/symbols.csv"
+    if os.path.exists(symbols_path):
+        with open(symbols_path, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if len(row) >= 2:
+                    symbols[row[0].strip()] = row[1].strip()
+    return symbols
+
+
+# -------------------------------
+# API Route
+# -------------------------------
+@app.route("/api/breakouts", methods=["GET"])
 def get_breakouts():
-    symbols_file = "datasets/symbols.csv"
-    daily_folder = "datasets/daily"
+    symbols_map = load_symbol_names()
+    results = []
 
-    if not os.path.exists(symbols_file):
-        return jsonify({"error": "symbols.csv not found"}), 404
+    daily_path = "datasets/daily"
+    if not os.path.exists(daily_path):
+        return jsonify({"error": "datasets/daily folder not found"}), 404
 
-    symbols_df = pd.read_csv(symbols_file, sep="\t", header=None, names=["Symbol", "Company"])
-    breakouts = []
-
-    for _, row in symbols_df.iterrows():
-        symbol = row["Symbol"]
-        company = row["Company"]
-        csv_path = os.path.join(daily_folder, f"{symbol}.csv")
-
-        if not os.path.exists(csv_path):
+    for filename in os.listdir(daily_path):
+        if not filename.endswith(".csv"):
             continue
 
-        df = pd.read_csv(csv_path)
-        if df.empty or "Close" not in df.columns:
-            continue
+        path = os.path.join(daily_path, filename)
+        try:
+            df = pd.read_csv(path)
+            if df.empty or "Close" not in df.columns:
+                continue
 
-        if is_breaking_out(df):
-            breakouts.append({
-                "symbol": symbol,
-                "company": company,
-                "chart": f"https://finviz.com/chart.ashx?t={symbol}&ty=c&ta=1&p=d&s=l"
-            })
+            symbol = filename.replace(".csv", "")
+            company = symbols_map.get(symbol, "Unknown Company")
 
-    return jsonify({"count": len(breakouts), "breakouts": breakouts})
+            if is_consolidating(df):
+                results.append({
+                    "symbol": symbol,
+                    "company": company,
+                    "status": "consolidating",
+                    "chart": f"https://finviz.com/chart.ashx?t={symbol}&ty=c&ta=1&p=d&s=l"
+                })
+            elif is_breaking_out(df):
+                results.append({
+                    "symbol": symbol,
+                    "company": company,
+                    "status": "breaking_out",
+                    "chart": f"https://finviz.com/chart.ashx?t={symbol}&ty=c&ta=1&p=d&s=l"
+                })
+
+        except Exception as e:
+            print(f"❌ Error processing {filename}: {e}")
+
+    return jsonify(results)
 
 
-@app.route("/api/snapshot")
-def snapshot():
-    # placeholder for future functionality if needed
-    return jsonify({"code": "success"})
-
-@app.route("/")
-def home():
-    return "Hello from Flask on Render!"
-
-
-
-# --- Main entry point for local testing ---
+# -------------------------------
+# Main entrypoint
+# -------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
+    app.run(debug=True, host="0.0.0.0", port=5000)
 
