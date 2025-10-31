@@ -6,4 +6,5 @@ pandas
 yfinance
 gunicorn
 requests_html
+yahoo_fin
 
