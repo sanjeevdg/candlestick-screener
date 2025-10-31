@@ -5,4 +5,5 @@ TA-Lib
 pandas
 yfinance
 gunicorn
+requests_html
 
