@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-def is_consolidating(df, percentage=14):
+def is_consolidating(df, percentage=4):
     if len(df) < 15:
         return False
 
