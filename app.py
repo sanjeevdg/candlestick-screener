@@ -10,7 +10,7 @@ import yfinance as yf
 #from yahoo_fin.stock_info import _requests
 
 from yahoo_fin import stock_info as si
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 
 
@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 
-def is_consolidating(df, percentage=2):
+def is_consolidating(df, percentage=14):
     if len(df) < 15:
         return False
 
@@ -50,6 +50,159 @@ def get_company_info(symbol):
         return info.get("shortName", symbol)
     except Exception:
         return symbol
+
+
+
+@app.route("/api/most_active_symbols")
+def most_active_symbols():
+    try:
+        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=most_actives"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
+        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
+
+        if not symbols:
+            raise ValueError("No symbols found in response")
+
+        return jsonify({"symbols": symbols})
+
+    except Exception as e:
+        print(f"Error fetching most active symbols: {e}")
+        return jsonify({"error": "Could not fetch symbols"}), 500
+
+
+
+@app.route("/api/day_gainers")
+def day_gainers():
+    try:
+        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=day_gainers"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
+        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
+
+        if not symbols:
+            raise ValueError("No symbols found in response")
+
+        return jsonify({"symbols": symbols})
+
+    except Exception as e:
+        print(f"Error fetching day gainers symbols: {e}")
+        return jsonify({"error": "Could not fetch symbols"}), 500
+
+
+
+
+@app.route("/api/day_losers")
+def day_losers():
+    try:
+        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=day_losers"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
+        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
+
+        if not symbols:
+            raise ValueError("No symbols found in response")
+
+        return jsonify({"symbols": symbols})
+
+    except Exception as e:
+        print(f"Error fetching day losers symbols: {e}")
+        return jsonify({"error": "Could not fetch symbols"}), 500
+
+
+
+
+
+
+@app.route("/api/patterns", methods=["GET"])
+def get_patterns():
+    symbols_str = request.args.get("symbols")
+    if not symbols_str:
+        return jsonify({"error": "symbols param required"}), 400
+
+    symbols = [s.strip().upper() for s in symbols_str.split(",") if s.strip()]
+
+    try:
+        data = yf.download(
+            tickers=symbols,
+            period="3mo",
+            interval="1d",
+            group_by="ticker",
+            threads=True,
+            auto_adjust=True,
+            progress=False,
+        )
+
+        results = []
+
+        for symbol in symbols:
+            try:
+                df = data[symbol] if isinstance(data.columns, pd.MultiIndex) else data
+                if df.empty:
+                    results.append({"symbol": symbol, "error": "no data"})
+                    continue
+
+                consolidating = bool(is_consolidating(df))
+                breaking_out = bool(is_breaking_out(df))
+
+                latest_close = float(df["Close"].iloc[-1])
+                prev_close = float(df["Close"].iloc[-2]) if len(df) > 1 else latest_close
+                percent_change = round(((latest_close - prev_close) / prev_close) * 100, 2)
+
+                results.append({
+                    "symbol": symbol,
+                    "latest_close": round(latest_close, 2),
+                    "percent_change": percent_change,
+                    "consolidating": consolidating,
+                    "breaking_out": breaking_out
+                })
+            except Exception as e:
+                results.append({
+                    "symbol": symbol,
+                    "error": str(e)
+                })
+
+        return jsonify(results)
+
+    except Exception as e:
+        print(f"Error fetching patterns: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/most_actives", methods=["GET"])
+def get_most_actives():
+    try:
+        # ✅ Try using yfinance’s new built-in function
+        movers = yf.get_market_movers("most_actives")
+        symbols = [item["symbol"] for item in movers[:20]]
+        return jsonify(symbols)
+    except Exception as e:
+        print("Error fetching most actives:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/breakouts")
@@ -164,6 +317,21 @@ def stock_extras():
         return jsonify({"error": str(e)}), 500
 '''
 
+def get_market_status():
+    """Determine U.S. market status based on time (Eastern)."""
+    tz = pytz.timezone("US/Eastern")
+    now = datetime.now(tz)
+    open_t = time(9, 30)
+    close_t = time(16, 0)
+
+    if now.weekday() >= 5:
+        return "closed"
+    elif now.time() < open_t:
+        return "premarket"
+    elif now.time() > close_t:
+        return "postmarket"
+    else:
+        return "regular"
 
 
 @app.route("/api/stock_extras")
@@ -174,48 +342,53 @@ def stock_extras():
 
     try:
         ticker = yf.Ticker(symbol)
-        fast_info = getattr(ticker, "fast_info", {})
+        market_status = get_market_status()
 
-        # Get data fields (use getattr to handle missing fields safely)
-        last_price = getattr(fast_info, "last_price", None)
+        # Fetch 1d minute-level data to get near-live price
+        hist_1m = ticker.history(period="1d", interval="1m")
+
+        if hist_1m.empty:
+            return jsonify({"error": "no intraday data"}), 404
+
+        last_price = hist_1m["Close"].iloc[-1]
+        volume_today = hist_1m["Volume"].sum()
+
+        # Compute average volume from last 5 trading days
+        hist_5d = ticker.history(period="5d", interval="1d")
+        avg_vol = hist_5d["Volume"].mean() if not hist_5d.empty else None
+        prev_close = hist_5d["Close"].iloc[-2] if len(hist_5d) > 1 else None
+
+        relative_volume = (
+            round(volume_today / avg_vol, 2)
+            if avg_vol and volume_today
+            else None
+        )
+
+        # Try to detect premarket / postmarket gap
+        fast_info = getattr(ticker, "fast_info", {})
         pre_price = getattr(fast_info, "pre_market_price", None)
         post_price = getattr(fast_info, "post_market_price", None)
-        volume = getattr(fast_info, "last_volume", None) or getattr(fast_info, "volume", None)
 
-        hist = ticker.history(period="5d", interval="1d")
-        if hist.empty:
-            return jsonify({"error": "no historical data"}), 404
+        gap_type, market_gap = None, None
 
-        avg_vol = hist["Volume"].mean()
-        prev_close = hist["Close"].iloc[-1]
-        rel_vol = round(volume / avg_vol, 2) if (volume and avg_vol) else None
-
-        # Determine which market data is available
-        market_gap = None
-        gap_type = None
-        market_status = "regular"
-
-        if pre_price and prev_close:
+        if market_status == "premarket" and pre_price and prev_close:
             market_gap = round((pre_price - prev_close) / prev_close * 100, 2)
             gap_type = "premarket"
-            market_status = "premarket"
-        elif post_price and prev_close:
+        elif market_status == "postmarket" and post_price and prev_close:
             market_gap = round((post_price - prev_close) / prev_close * 100, 2)
             gap_type = "postmarket"
-            market_status = "postmarket"
 
-        # Add timestamp with timezone (US Eastern)
         tz = pytz.timezone("US/Eastern")
         timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S %Z")
 
         return jsonify({
             "symbol": symbol,
-            "relative_volume": rel_vol,
+            "price": float(last_price),
+            "prev_close": float(prev_close) if prev_close else None,
+            "relative_volume": relative_volume,
             "market_gap": market_gap,
             "gap_type": gap_type,
             "market_status": market_status,
-            "price": last_price,
-            "prev_close": prev_close,
             "timestamp": timestamp
         })
 
@@ -224,70 +397,6 @@ def stock_extras():
         return jsonify({"error": str(e)}), 500
 
 
-
-@app.route("/api/stock_extras2")
-def get_stock_extras2():
-    """Fetch relative volume and premarket gap using Yahoo's public quote API"""
-    symbol = request.args.get("symbol")
-    if not symbol:
-        return jsonify({"error": "symbol parameter is required"}), 400
-
-    try:
-        url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={symbol}"
-
-        # --- Proper browser-like headers ---
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://finance.yahoo.com/",
-            "Origin": "https://finance.yahoo.com",
-            "Connection": "keep-alive",
-        }
-
-        resp = requests.get(url, headers=headers, timeout=8)
-        resp.raise_for_status()
-
-        payload = resp.json()
-        result = payload.get("quoteResponse", {}).get("result", [])
-        if not result:
-            return jsonify({"error": f"No data for symbol {symbol}"}), 404
-
-        q = result[0]
-
-        prev_close = q.get("regularMarketPreviousClose")
-        curr_vol = q.get("regularMarketVolume")
-        avg_vol = q.get("averageDailyVolume3Month") or q.get("averageDailyVolume10Day")
-        pre_market = q.get("preMarketPrice")
-
-        # --- Compute metrics ---
-        relative_volume = round(curr_vol / avg_vol, 2) if curr_vol and avg_vol else None
-        premarket_gap = (
-            round(((pre_market - prev_close) / prev_close) * 100, 2)
-            if pre_market and prev_close
-            else None
-        )
-
-        return jsonify({
-            "symbol": symbol,
-            "relative_volume": relative_volume,
-            "premarket_gap": premarket_gap,
-            "pre_market_price": pre_market,
-            "previous_close": prev_close,
-            "current_volume": curr_vol,
-            "average_volume": avg_vol,
-        })
-
-    except requests.exceptions.RequestException as e:
-        print(f"Network error fetching {symbol}: {e}")
-        return jsonify({"error": "Yahoo request failed"}), 502
-    except Exception as e:
-        print(f"Unexpected error for {symbol}: {e}")
-        return jsonify({"error": str(e)}), 500
 
 
 
