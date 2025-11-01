@@ -1,10 +1,10 @@
 flask
 flask-cors
 requests
+requests_html
 TA-Lib
 pandas
 yfinance
 gunicorn
-requests_html
 yahoo_fin
 
