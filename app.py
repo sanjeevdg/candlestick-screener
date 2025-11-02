@@ -12,7 +12,7 @@ import yfinance as yf
 from yahoo_fin import stock_info as si
 from datetime import datetime, time
 import pytz
-
+import math
 
 app = Flask(__name__)
 CORS(app)
@@ -50,6 +50,38 @@ def get_company_info(symbol):
         return info.get("shortName", symbol)
     except Exception:
         return symbol
+
+
+
+@app.route("/api/most_active_symbols_100")
+def most_active_symbols_100():
+    try:
+        # Add count=100 to the query URL to get more results
+        url = (
+            "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved"
+            "?scrIds=most_actives&count=100"
+        )
+
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json, text/plain, */*",
+        }
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
+        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
+
+        if not symbols:
+            raise ValueError("No symbols found in response")
+
+        return jsonify({"count": len(symbols), "symbols": symbols})
+
+    except Exception as e:
+        print(f"Error fetching most active symbols: {e}")
+        return jsonify({"error": "Could not fetch symbols"}), 500
 
 
 
@@ -135,6 +167,18 @@ def day_losers():
 
 
 
+def clean_json(obj):
+    """Recursively replace NaN and Infinity with None for valid JSON."""
+    if isinstance(obj, dict):
+        return {k: clean_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [clean_json(i) for i in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    else:
+        return obj
 
 
 
@@ -186,7 +230,9 @@ def get_patterns():
                     "error": str(e)
                 })
 
-        return jsonify(results)
+        safe_results = clean_json(results)         
+
+        return jsonify(safe_results)
 
     except Exception as e:
         print(f"Error fetching patterns: {e}")
