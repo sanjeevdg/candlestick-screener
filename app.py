@@ -53,6 +53,95 @@ def get_company_info(symbol):
 
 
 
+
+
+@app.route("/api/sma", methods=["GET"])
+def calculate_sma():
+    symbols = request.args.get("symbols", "")
+    sma_periods = [20, 50, 200]
+    results = {}
+
+    if not symbols:
+        return jsonify({"error": "Please provide comma-separated symbols"}), 400
+
+    symbol_list = [s.strip().upper() for s in symbols.split(",")]
+
+    for symbol in symbol_list:
+        try:
+            df = yf.download(symbol, period="1y", progress=False, auto_adjust=True)
+            if df.empty:
+                results[symbol] = {"error": "No data found"}
+                continue
+
+            # --- Extract Close column robustly ---
+            if isinstance(df.columns, pd.MultiIndex):
+                # Try to locate ('Close', symbol)
+                if ("Close", symbol) in df.columns:
+                    close_data = df[("Close", symbol)]
+                elif ("Adj Close", symbol) in df.columns:
+                    close_data = df[("Adj Close", symbol)]
+                elif "Close" in df.columns.get_level_values(0):
+                    close_data = df["Close"].iloc[:, 0]
+                else:
+                    results[symbol] = {"error": "No Close column found"}
+                    continue
+            else:
+                if "Close" in df.columns:
+                    close_data = df["Close"]
+                elif "Adj Close" in df.columns:
+                    close_data = df["Adj Close"]
+                else:
+                    results[symbol] = {"error": "No Close or Adj Close column found"}
+                    continue
+
+            # --- Force to Series ---
+            close_series = pd.Series(close_data).astype(float).dropna()
+            df = pd.DataFrame({"Close": close_series})
+
+            # --- Compute SMAs ---
+            for period in sma_periods:
+                df[f"SMA_{period}"] = df["Close"].rolling(window=period, min_periods=period).mean()
+
+            if len(df) < max(sma_periods):
+                results[symbol] = {"error": "Not enough data for SMA calculation"}
+                continue
+
+            curr = df.iloc[-1]
+            prev = df.iloc[-2] if len(df) > 1 else None
+
+            entry = {"close": round(curr["Close"], 2)}
+            for period in sma_periods:
+                val = curr[f"SMA_{period}"]
+                entry[f"sma_{period}"] = round(val, 2) if pd.notna(val) else None
+
+            # --- Crossover signals ---
+            def get_signal(short, long):
+                if prev is None:
+                    return "neutral"
+                if (
+                    prev[f"SMA_{short}"] < prev[f"SMA_{long}"]
+                    and curr[f"SMA_{short}"] >= curr[f"SMA_{long}"]
+                ):
+                    return "bullish_cross"
+                elif (
+                    prev[f"SMA_{short}"] > prev[f"SMA_{long}"]
+                    and curr[f"SMA_{short}"] <= curr[f"SMA_{long}"]
+                ):
+                    return "bearish_cross"
+                return "neutral"
+
+            entry["signal_20_50"] = get_signal(20, 50)
+            entry["signal_50_200"] = get_signal(50, 200)
+
+            results[symbol] = entry
+
+        except Exception as e:
+            results[symbol] = {"error": str(e)}
+
+    return jsonify(results)
+
+
+
 @app.route("/api/most_active_symbols_100")
 def most_active_symbols_100():
     try:
