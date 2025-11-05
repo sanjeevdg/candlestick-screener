@@ -183,6 +183,7 @@ def custom_screener():
     min_day_vol = int(request.args.get("min_eodvolume"))
     max_day_vol = int(request.args.get("max_eodvolume"))
     region = request.args.get("region", "us")
+    
     sort_field = request.args.get("sort_field", "percentchange")
     sort_asc = request.args.get("sort_asc", "false").lower() == "true"
     limit = int(request.args.get("limit", 25))
