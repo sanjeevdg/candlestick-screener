@@ -4,6 +4,7 @@ from flask_cors import CORS
 import os
 import pandas as pd
 import yfinance as yf
+from yfinance import EquityQuery
 #from yfinance.scrapers.quote import quote as yf_quote
 #from yahoo_fin import stock_info as si
 #import yahoo_fin.stock_info as si
@@ -173,6 +174,58 @@ def most_active_symbols_100():
         return jsonify({"error": "Could not fetch symbols"}), 500
 
 
+@app.route("/api/screen_by_criteria", methods=["GET"])
+def custom_screener():
+    # 🧠 read query parameters
+    min_change = float(request.args.get("min_change", 3))   # e.g. percent change > 3%
+    min_price = float(request.args.get("min_price", 0))     # e.g. price > 0
+    max_price = float(request.args.get("max_price", 1e6))
+    min_day_vol = int(request.args.get("min_eodvolume"))
+    max_day_vol = int(request.args.get("max_eodvolume"))
+    region = request.args.get("region", "us")
+    sort_field = request.args.get("sort_field", "percentchange")
+    sort_asc = request.args.get("sort_asc", "false").lower() == "true"
+    limit = int(request.args.get("limit", 25))
+
+    try:
+        # 🧩 Build query dynamically
+        criteria = [
+            EquityQuery("gt", ["percentchange", min_change]),
+            EquityQuery("eq", ["region", region]),
+            EquityQuery("gt", ["dayvolume", min_day_vol]),
+            EquityQuery("lt", ["dayvolume", max_day_vol]),
+           EquityQuery("gt", ["eodprice", min_price]),
+           EquityQuery("lt", ["eodprice", max_price])
+        ]
+        query = EquityQuery("and", criteria)
+
+        # 🚀 Run the screen
+        data = yf.screen(query, sortField=sort_field, sortAsc=sort_asc)
+        quotes = data.get("quotes", [])
+
+        # 🧾 Normalize into DataFrame
+        df = pd.DataFrame(quotes)
+        if df.empty:
+            return jsonify([])
+
+        # 📊 Select and rename fields
+        df = df.rename(columns={
+            "symbol": "symbol",
+            "shortName": "name",
+            "regularMarketPrice": "price",
+            "regularMarketChangePercent": "percentchange",
+            "regularMarketVolume": "volume"
+        })
+
+        df = df[["symbol", "name", "price", "percentchange", "volume"]].head(limit)
+
+        results = df.to_dict(orient="records")
+        return jsonify(results)
+
+    except Exception as e:
+        print("❌ Screener error:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/most_active_symbols")
 def most_active_symbols():
@@ -328,16 +381,76 @@ def get_patterns():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/most_actives", methods=["GET"])
-def get_most_actives():
+YAHOO_URL = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved"
+
+@app.route("/api/most_actives")
+def most_actives():
     try:
-        # ✅ Try using yfinance’s new built-in function
-        movers = yf.get_market_movers("most_actives")
-        symbols = [item["symbol"] for item in movers[:20]]
-        return jsonify(symbols)
+        # Try yfinance helper if available
+        try:
+            tickers = yf.get_day_most_active()
+            if tickers is not None and len(tickers) > 0:
+                results = [
+                    {
+                        "symbol": t.get("symbol"),
+                        "name": t.get("shortName") or t.get("longName") or "N/A",
+                        "price": t.get("regularMarketPrice"),
+                        "change": t.get("regularMarketChangePercent"),
+                        "volume": t.get("regularMarketVolume")
+                    }
+                    for t in tickers
+                ]
+                return jsonify({"data": results})
+        except Exception:
+            # fallback to manual fetch
+            pass
+
+        # Manual Yahoo Finance Screener API
+        params = {
+            "count": 100,
+            "scrIds": "most_actives",
+        }
+
+        response = requests.get(YAHOO_URL, params=params, timeout=10)
+
+        if response.status_code != 200:
+            return jsonify({
+                "error": f"Yahoo API HTTP {response.status_code}",
+                "body": response.text[:200]  # show first part of response
+            }), 502
+
+        # Ensure JSON is valid
+        try:
+            data = response.json()
+        except ValueError:
+            return jsonify({
+                "error": "Invalid JSON from Yahoo API",
+                "body": response.text[:200]
+            }), 502
+
+        # Extract quotes safely
+        quotes = data.get("finance", {}).get("result", [{}])[0].get("quotes", [])
+        if not quotes:
+            return jsonify({"error": "No quotes found in Yahoo response"}), 502
+
+        results = [
+            {
+                "symbol": q.get("symbol"),
+                "name": q.get("shortName") or q.get("longName") or "N/A",
+                "price": q.get("regularMarketPrice"),
+                "change": q.get("regularMarketChangePercent"),
+                "volume": q.get("regularMarketVolume"),
+            }
+            for q in quotes
+            if q.get("symbol")
+        ]
+
+        return jsonify({"data": results})
+
     except Exception as e:
-        print("Error fetching most actives:", e)
+        print("Error in Python fallback:", e)
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/api/breakouts")
