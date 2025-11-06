@@ -1,23 +1,29 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, Response, request
 import requests
 from flask_cors import CORS
 import os
 import pandas as pd
 import yfinance as yf
 from yfinance import EquityQuery
+from concurrent.futures import ThreadPoolExecutor
 #from yfinance.scrapers.quote import quote as yf_quote
 #from yahoo_fin import stock_info as si
 #import yahoo_fin.stock_info as si
 #from yahoo_fin.stock_info import _requests
-
+import threading
 from yahoo_fin import stock_info as si
-from datetime import datetime, time
+from datetime import datetime 
 import pytz
 import math
+import time
+from queue import Queue
+import json
 
 app = Flask(__name__)
 CORS(app)
 
+
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
 
 def is_consolidating(df, percentage=4):
     if len(df) < 15:
@@ -177,27 +183,59 @@ def most_active_symbols_100():
 @app.route("/api/screen_by_criteria", methods=["GET"])
 def custom_screener():
     # 🧠 read query parameters
+    '''
     min_change = float(request.args.get("min_change", 3))   # e.g. percent change > 3%
     min_price = float(request.args.get("min_price", 0))     # e.g. price > 0
     max_price = float(request.args.get("max_price", 1e6))
-    min_day_vol = int(request.args.get("min_eodvolume"))
-    max_day_vol = int(request.args.get("max_eodvolume"))
-    region = request.args.get("region", "us")
-    
+    min_day_vol = float(request.args.get("min_eodvolume"))
+    max_day_vol = float(request.args.get("max_eodvolume"))
+    region = request.args.get("region", "US")
+   '''
+    # ✅ Read query parameters with correct names
+    region = request.args.get("region", "us").lower()
+
+        # ✅ Use correct names as sent in your curl
+    min_price = float(request.args.get("min_price", 0))
+    max_price = float(request.args.get("max_price", 1_000_000))
+    min_change = float(request.args.get("min_change", 0))
+    min_day_vol = float(request.args.get("min_eodvolume", 0))
+    max_day_vol = float(request.args.get("max_eodvolume", 1_000_000_000_000))
+
+    print(f"Using region: {region}")
+    print(f"Using min_price: {min_price}")
+    print(f"Using max_price: {max_price}")
+    print(f"Using min_change: {min_change}")
+    print(f"Using min_day_vol: {min_day_vol}")
+    print(f"Using max_day_vol: {max_day_vol}")
+
+
     sort_field = request.args.get("sort_field", "percentchange")
     sort_asc = request.args.get("sort_asc", "false").lower() == "true"
-    limit = int(request.args.get("limit", 25))
+    limit = int(request.args.get("limit", 5))
 
     try:
         # 🧩 Build query dynamically
+
         criteria = [
-            EquityQuery("gt", ["percentchange", min_change]),
-            EquityQuery("eq", ["region", region]),
-            EquityQuery("gt", ["dayvolume", min_day_vol]),
-            EquityQuery("lt", ["dayvolume", max_day_vol]),
+            EquityQuery("eq", ["region", region]),        # Only region filter
+            EquityQuery("gt", ["dayvolume", 1_000_000]),  # Liquid stocks
+            EquityQuery("gt", ["eodprice", 10]),          # Avoid penny stocks
+            EquityQuery("lt", ["eodprice", 1000])         # Reasonable upper bound
+        ]
+
+        '''
+        criteria = [
+           EquityQuery("gt", ["percentchange", min_change]),
+           EquityQuery("eq", ["region", region]),
+           EquityQuery("gt", ["dayvolume", min_day_vol]),
+           EquityQuery("lt", ["dayvolume", max_day_vol]),
            EquityQuery("gt", ["eodprice", min_price]),
            EquityQuery("lt", ["eodprice", max_price])
         ]
+        '''
+        
+
+
         query = EquityQuery("and", criteria)
 
         # 🚀 Run the screen
@@ -226,6 +264,264 @@ def custom_screener():
     except Exception as e:
         print("❌ Screener error:", e)
         return jsonify({"error": str(e)}), 500
+
+
+
+
+'''
+latest_quotes = {}
+symbols_to_watch = []
+ws = None
+
+def start_yfinance_stream(symbols):
+    global ws
+    if ws:
+        try:
+            ws.close()
+        except Exception:
+            pass
+
+    print(f"📡 Starting WebSocket for {symbols}")
+    ws = yf.WebSocket()
+
+    def handler(message):
+        symbol = message.get("id")
+        if symbol:
+            latest_quotes[symbol] = {
+                "symbol": symbol,
+                "price": message.get("price"),
+                "percentChange": message.get("changePercent"),
+                "volume": message.get("dayVolume"),
+                "timestamp": message.get("time"),
+            }
+            print(f"✅ {symbol} update:", latest_quotes[symbol])
+
+    ws.subscribe(symbols)
+    ws.listen(handler)
+
+@app.route("/api/subscribe", methods=["POST"])
+def subscribe_symbols():
+    """Subscribe dynamically to user-selected tickers."""
+    body = request.get_json()
+    new_symbols = body.get("symbols", [])
+    if not new_symbols:
+        return jsonify({"error": "No symbols provided"}), 400
+
+    global symbols_to_watch
+    symbols_to_watch = [s.upper() for s in new_symbols]
+
+    threading.Thread(
+        target=start_yfinance_stream,
+        args=(symbols_to_watch,),
+        daemon=True
+    ).start()
+
+    return jsonify({"status": "subscribed", "symbols": symbols_to_watch})
+
+@app.route("/api/quotes", methods=["GET"])
+def get_quotes():
+    """Return latest streamed data for the requested symbols."""
+    symbols = request.args.get("symbols")
+    if not symbols:
+        return jsonify([])
+
+    symbols = [s.strip().upper() for s in symbols.split(",")]
+
+    data = [latest_quotes.get(s, {"symbol": s, "error": "no data yet"}) for s in symbols]
+    return jsonify(data)
+'''
+
+# Global live quote cache and WebSocket reference
+
+'''WORKING SNIPPET BWLOW
+latest_quotes = {}
+symbols_tracked = set()
+
+def message_handler(msg):
+    latest_quotes[msg["id"]] = msg
+
+def start_ws(symbols):
+    ws = yf.WebSocket()
+    ws.subscribe(symbols)
+    ws.listen(message_handler)
+
+@app.route("/api/quotes")
+def get_quotes():
+    symbols = [s.strip().upper() for s in request.args.get("symbols", "").split(",") if s]
+
+    # Start WebSocket thread if new symbols are added
+    new_symbols = set(symbols) - symbols_tracked
+    if new_symbols:
+        symbols_tracked.update(new_symbols)
+        threading.Thread(target=start_ws, args=(list(symbols_tracked),), daemon=True).start()
+
+    # Return latest data (if available)
+    results = []
+    for sym in symbols:
+        if sym in latest_quotes:
+            results.append(latest_quotes[sym])
+        else:
+            results.append({"error": "no data yet", "symbol": sym})
+    return jsonify(results)
+'''
+
+
+
+
+clients = []           # all SSE connections
+tracked_symbols = set()
+latest_data = {}        # { symbol: { ...last quote... } }
+
+# === WebSocket handler ===
+def message_handler(message):
+    try:
+        data = {
+            "symbol": message.get("id"),
+            "price": message.get("price"),
+            "percentchange": message.get("change_percent"),
+            "volume": message.get("day_volume"),
+        }
+        payload = json.dumps(data)  # ✅ Works now
+        for conn in clients:
+            conn.put(payload)
+    except Exception as e:
+        print("Error in message handler:", e)
+
+def start_ws(symbols):
+    """Start yfinance WebSocket for new symbols"""
+    ws = yf.WebSocket()
+    ws.subscribe(symbols)
+    ws.listen(message_handler)
+
+# === API Endpoints ===
+@app.route("/api/add_symbol", methods=["POST"])
+def add_symbol():
+    """Frontend calls this to start tracking a new symbol"""
+    body = request.get_json()
+    symbol = body.get("symbol", "").upper()
+    if not symbol:
+        return jsonify({"error": "Missing symbol"}), 400
+
+    if symbol not in tracked_symbols:
+        tracked_symbols.add(symbol)
+        threading.Thread(target=start_ws, args=([symbol],), daemon=True).start()
+
+    return jsonify({"status": "subscribed", "symbol": symbol})
+
+@app.route("/api/stream")
+def stream():
+    """Continuous stream of live updates (SSE)"""
+    def event_stream():
+        q = Queue()
+        clients.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {data}\n\n"
+        except GeneratorExit:
+            clients.remove(q)
+
+    return Response(event_stream(), mimetype="text/event-stream")
+
+@app.route("/api/latest")
+def get_latest():
+    """Optional endpoint to get current snapshot"""
+    return jsonify(list(latest_data.values()))
+
+
+
+
+
+'''
+def get_quote(symbol):
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.fast_info or {}
+        price = info.get("last_price")
+        change = info.get("regular_market_change_percent")
+        volume = info.get("regular_market_volume")
+
+        # ✅ fallback to .info if any field is missing
+        if not price or not volume:
+            full = ticker.info or {}
+            price = full.get("regularMarketPrice") or price
+            change = full.get("regularMarketChangePercent") or change
+            volume = full.get("regularMarketVolume") or volume
+
+        name = (
+            info.get("short_name")
+            or full.get("shortName") if "full" in locals() else None
+        )
+
+        return {
+            "symbol": symbol,
+            "name": name,
+            "price": round(price, 2) if price else None,
+            "percentChange": round(change, 2) if change else None,
+            "volume": int(volume) if volume else None
+        }
+    except Exception as e:
+        print(f"❌ Error fetching {symbol}: {e}")
+        return {"symbol": symbol, "error": str(e)}
+
+@app.route("/api/quotes", methods=["GET"])
+def quotes():
+    symbols = request.args.get("symbols")
+    if not symbols:
+        return jsonify({"error": "symbols parameter required"}), 400
+
+    symbols_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        data = list(executor.map(get_quote, symbols_list))
+
+    # filter valid records
+    results = [r for r in data if r.get("price") is not None]
+    return jsonify(results)
+'''
+
+
+'''
+
+def fetch_quote(symbol):
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=GLOBAL_QUOTE&symbol={symbol}&apikey={ALPHA_VANTAGE_API_KEY}"
+    )
+    try:
+        resp = requests.get(url, timeout=5)
+        data = resp.json().get("Global Quote", {})
+        if not data:
+            return {"symbol": symbol, "error": "no data"}
+        price = float(data.get("05. price", 0))
+        change_pct = float(data.get("10. change percent", "0%").strip("%"))
+        volume = int(data.get("06. volume", 0))
+        return {
+            "symbol": symbol,
+            "price": round(price, 2),
+            "percentChange": round(change_pct, 2),
+            "volume": volume,
+        }
+    except Exception as e:
+        return {"symbol": symbol, "error": str(e)}
+
+@app.route("/api/quotes", methods=["GET"])
+def quotes():
+    symbols = request.args.get("symbols")
+    if not symbols:
+        return jsonify({"error": "symbols parameter required"}), 400
+
+    symbols_list = [s.strip().upper() for s in symbols.split(",") if s.strip()]
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        data = list(executor.map(fetch_quote, symbols_list))
+
+    return jsonify(data)
+
+'''
+
+
+
 
 
 @app.route("/api/most_active_symbols")
