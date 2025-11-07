@@ -259,14 +259,22 @@ def custom_screener():
         df = df[["symbol", "name", "price", "percentchange", "volume"]].head(limit)
 
         results = df.to_dict(orient="records")
-        return jsonify(results)
+        return jsonify(clean_nans(results))
 
     except Exception as e:
         print("❌ Screener error:", e)
         return jsonify({"error": str(e)}), 500
 
 
-
+def clean_nans(obj):
+    """Recursively replace NaN/inf/-inf with None for JSON safety."""
+    if isinstance(obj, list):
+        return [clean_nans(x) for x in obj]
+    elif isinstance(obj, dict):
+        return {k: clean_nans(v) for k, v in obj.items()}
+    elif isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    return obj
 
 '''
 latest_quotes = {}
