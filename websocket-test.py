@@ -1,5 +1,7 @@
 import yfinance as yf
 
+
+
 def message_handler(msg):
     print("🟢 Got message:", msg)
 

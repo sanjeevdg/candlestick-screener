@@ -20,7 +20,16 @@ from queue import Queue
 import json
 
 app = Flask(__name__)
-CORS(app, origins=["https://sanjeevdg.github.io"])
+
+
+ALLOWED_ORIGINS = [
+    "https://sanjeevdg.github.io",
+    "http://localhost:3000"
+]
+
+CORS(app, origins=ALLOWED_ORIGINS)
+
+#CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
 
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
@@ -429,14 +438,24 @@ def stream():
         except GeneratorExit:
             clients.remove(q)
 
+    origin = request.headers.get("Origin")
+    if origin not in ALLOWED_ORIGINS:
+        origin = None  # Don't send Access-Control-Allow-Origin if not allowed
+
+
     #return Response(event_stream(), mimetype="text/event-stream")
     response = Response(event_stream(), mimetype="text/event-stream")
-    response.headers["Access-Control-Allow-Origin"] = "https://sanjeevdg.github.io"
+
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
     response.headers["Access-Control-Allow-Credentials"] = "true"
 
     return response
+
+
+
 
 @app.route("/api/latest")
 def get_latest():
