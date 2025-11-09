@@ -20,7 +20,7 @@ from queue import Queue
 import json
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://sanjeevdg.github.io"])
 
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
