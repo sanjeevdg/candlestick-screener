@@ -429,7 +429,14 @@ def stream():
         except GeneratorExit:
             clients.remove(q)
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    #return Response(event_stream(), mimetype="text/event-stream")
+    response = Response(event_stream(), mimetype="text/event-stream")
+    response.headers["Access-Control-Allow-Origin"] = "https://sanjeevdg.github.io"
+    response.headers["Cache-Control"] = "no-cache"
+    response.headers["Connection"] = "keep-alive"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+
+    return response
 
 @app.route("/api/latest")
 def get_latest():
