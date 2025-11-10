@@ -28,7 +28,10 @@ ALLOWED_ORIGINS = [
 ]
 
 #//CORS(app, origins=ALLOWED_ORIGINS)
-cors = CORS(app, resources={r"/api/*": {"origins": "https://sanjeevdg.github.io"}})
+CORS(app, origins=[
+    "http://localhost:3000",
+    "https://sanjeevdg.github.io"
+], resources={r"/api/*": {"origins": ["http://localhost:3000", "https://sanjeevdg.github.io"]}})
 #CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
 
 
@@ -440,18 +443,19 @@ def stream():
             clients.remove(q)
 
    # origin = request.headers.get("Origin")
-   # if origin not in ALLOWED_ORIGINS:
-   #     origin = None  # Don't send Access-Control-Allow-Origin if not allowed
-
+   
     #Added a comment only for spoofing into reloading server container        
     #return Response(event_stream(), mimetype="text/event-stream")
     response = Response(event_stream(), mimetype="text/event-stream")
 
-    #if origin:
-    response.headers["Access-Control-Allow-Origin"] = 'https://sanjeevdg.github.io'
+    if origin in ["https://sanjeevdg.github.io", "http://localhost:3000"]:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+
+    response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Content-Type"] = "text/event-stream"
 
     return response
 
