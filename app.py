@@ -27,8 +27,8 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000"
 ]
 
-CORS(app, origins=ALLOWED_ORIGINS)
-
+#//CORS(app, origins=ALLOWED_ORIGINS)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 #CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
 
 
@@ -438,16 +438,16 @@ def stream():
         except GeneratorExit:
             clients.remove(q)
 
-    origin = request.headers.get("Origin")
-    if origin not in ALLOWED_ORIGINS:
-        origin = None  # Don't send Access-Control-Allow-Origin if not allowed
+   # origin = request.headers.get("Origin")
+   # if origin not in ALLOWED_ORIGINS:
+   #     origin = None  # Don't send Access-Control-Allow-Origin if not allowed
 
 
     #return Response(event_stream(), mimetype="text/event-stream")
     response = Response(event_stream(), mimetype="text/event-stream")
 
-    if origin:
-        response.headers["Access-Control-Allow-Origin"] = origin
+    #if origin:
+    response.headers["Access-Control-Allow-Origin"] = '*'
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
     response.headers["Access-Control-Allow-Credentials"] = "true"
