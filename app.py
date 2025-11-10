@@ -426,7 +426,7 @@ def add_symbol():
     return jsonify({"status": "subscribed", "symbol": symbol})
 
 @app.route("/api/stream")
-@cross_origin(origin='https://sanjeevdg.github.io',headers=['Content- Type','Authorization'])
+#@cross_origin(origin='https://sanjeevdg.github.io',headers=['Content- Type','Authorization'])
 def stream():
     """Continuous stream of live updates (SSE)"""
     def event_stream():
@@ -448,7 +448,7 @@ def stream():
     response = Response(event_stream(), mimetype="text/event-stream")
 
     #if origin:
-    #response.headers["Access-Control-Allow-Origin"] = 'https://sanjeevdg.github.io'
+    response.headers["Access-Control-Allow-Origin"] = 'https://sanjeevdg.github.io'
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
     response.headers["Access-Control-Allow-Credentials"] = "true"
