@@ -448,7 +448,7 @@ def stream():
     response = Response(event_stream(), mimetype="text/event-stream")
 
     #if origin:
-    response.headers["Access-Control-Allow-Origin"] = '*'
+    response.headers["Access-Control-Allow-Origin"] = 'https://sanjeevdg.github.io'
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
     response.headers["Access-Control-Allow-Credentials"] = "true"
