@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, Response, request
 import requests
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
 import pandas as pd
 import yfinance as yf
@@ -28,7 +28,7 @@ ALLOWED_ORIGINS = [
 ]
 
 #//CORS(app, origins=ALLOWED_ORIGINS)
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+cors = CORS(app, resources={r"/api/*": {"origins": "https://sanjeevdg.github.io"}})
 #CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
 
 
@@ -426,6 +426,7 @@ def add_symbol():
     return jsonify({"status": "subscribed", "symbol": symbol})
 
 @app.route("/api/stream")
+@cross_origin(origin='https://sanjeevdg.github.io',headers=['Content- Type','Authorization'])
 def stream():
     """Continuous stream of live updates (SSE)"""
     def event_stream():
