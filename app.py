@@ -429,7 +429,6 @@ def add_symbol():
     return jsonify({"status": "subscribed", "symbol": symbol})
 
 @app.route("/api/stream")
-@cross_origin(origin='https://sanjeevdg.github.io',headers=['Content- Type','Authorization'])
 def stream():
     """Continuous stream of live updates (SSE)"""
     def event_stream():
@@ -437,30 +436,21 @@ def stream():
         clients.append(q)
         try:
             while True:
-                data = q.get()
-                yield f"data: {data}\n\n"
+                try:
+                    data = q.get(timeout=15)  # wait max 15s for new data
+                    yield f"data: {data}\n\n"
+                except Empty:
+                    # Send a heartbeat every 15s to keep connection alive
+                    yield f"data: {{\"heartbeat\": {int(time.time())}}}\n\n"
         except GeneratorExit:
             clients.remove(q)
 
-   # origin = request.headers.get("Origin")
-   
-    #Added a comment only for spoofing into reloading server container        
-    #return Response(event_stream(), mimetype="text/event-stream")
-    origin = request.headers.get("Origin")
-            
     response = Response(event_stream(), mimetype="text/event-stream")
-
-    if origin in ["https://sanjeevdg.github.io", "http://localhost:3000"]:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Vary"] = "Origin"
-
-    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Origin"] = "https://sanjeevdg.github.io"
     response.headers["Cache-Control"] = "no-cache"
     response.headers["Connection"] = "keep-alive"
-    response.headers["Content-Type"] = "text/event-stream"
-
+    response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
-
 
 
 
