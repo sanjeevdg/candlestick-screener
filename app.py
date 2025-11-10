@@ -446,6 +446,8 @@ def stream():
    
     #Added a comment only for spoofing into reloading server container        
     #return Response(event_stream(), mimetype="text/event-stream")
+    origin = request.headers.get("Origin")
+            
     response = Response(event_stream(), mimetype="text/event-stream")
 
     if origin in ["https://sanjeevdg.github.io", "http://localhost:3000"]:
