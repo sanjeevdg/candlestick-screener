@@ -7,4 +7,5 @@ pandas
 yfinance
 gunicorn
 yahoo_fin
+gevent
 
