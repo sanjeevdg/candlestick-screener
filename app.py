@@ -16,7 +16,7 @@ from datetime import datetime
 import pytz
 import math
 import time
-from queue import Queue, Empty
+from queue import Queue
 import json
 
 app = Flask(__name__)
@@ -194,72 +194,37 @@ def most_active_symbols_100():
 
 @app.route("/api/screen_by_criteria", methods=["GET"])
 def custom_screener():
-    # 🧠 read query parameters
-    '''
-    min_change = float(request.args.get("min_change", 3))   # e.g. percent change > 3%
-    min_price = float(request.args.get("min_price", 0))     # e.g. price > 0
-    max_price = float(request.args.get("max_price", 1e6))
-    min_day_vol = float(request.args.get("min_eodvolume"))
-    max_day_vol = float(request.args.get("max_eodvolume"))
-    region = request.args.get("region", "US")
-   '''
-    # ✅ Read query parameters with correct names
     region = request.args.get("region", "us").lower()
-
-        # ✅ Use correct names as sent in your curl
     min_price = float(request.args.get("min_price", 0))
     max_price = float(request.args.get("max_price", 1_000_000))
     min_change = float(request.args.get("min_change", 0))
     min_day_vol = float(request.args.get("min_eodvolume", 0))
     max_day_vol = float(request.args.get("max_eodvolume", 1_000_000_000_000))
-
-    print(f"Using region: {region}")
-    print(f"Using min_price: {min_price}")
-    print(f"Using max_price: {max_price}")
-    print(f"Using min_change: {min_change}")
-    print(f"Using min_day_vol: {min_day_vol}")
-    print(f"Using max_day_vol: {max_day_vol}")
-
-
     sort_field = request.args.get("sort_field", "percentchange")
     sort_asc = request.args.get("sort_asc", "false").lower() == "true"
     limit = int(request.args.get("limit", 5))
 
     try:
         # 🧩 Build query dynamically
-
         criteria = [
-            EquityQuery("eq", ["region", region]),        # Only region filter
-            EquityQuery("gt", ["dayvolume", 1_000_000]),  # Liquid stocks
-            EquityQuery("gt", ["eodprice", 10]),          # Avoid penny stocks
-            EquityQuery("lt", ["eodprice", 1000])         # Reasonable upper bound
+            EquityQuery("eq", ["region", region]),
+            EquityQuery("gt", ["dayvolume", min_day_vol]),
+            EquityQuery("lt", ["dayvolume", max_day_vol]),
+            EquityQuery("gt", ["eodprice", min_price]),
+            EquityQuery("lt", ["eodprice", max_price])
         ]
-
-        '''
-        criteria = [
-           EquityQuery("gt", ["percentchange", min_change]),
-           EquityQuery("eq", ["region", region]),
-           EquityQuery("gt", ["dayvolume", min_day_vol]),
-           EquityQuery("lt", ["dayvolume", max_day_vol]),
-           EquityQuery("gt", ["eodprice", min_price]),
-           EquityQuery("lt", ["eodprice", max_price])
-        ]
-        '''
-        
-
 
         query = EquityQuery("and", criteria)
 
-        # 🚀 Run the screen
+        # 🚀 Run the screener
         data = yf.screen(query, sortField=sort_field, sortAsc=sort_asc)
         quotes = data.get("quotes", [])
 
-        # 🧾 Normalize into DataFrame
+        # 🧾 Normalize
         df = pd.DataFrame(quotes)
         if df.empty:
             return jsonify([])
 
-        # 📊 Select and rename fields
         df = df.rename(columns={
             "symbol": "symbol",
             "shortName": "name",
@@ -269,13 +234,21 @@ def custom_screener():
         })
 
         df = df[["symbol", "name", "price", "percentchange", "volume"]].head(limit)
-
         results = df.to_dict(orient="records")
         return jsonify(clean_nans(results))
 
     except Exception as e:
+        # 🧠 Detect rate limit / "Too Many Requests"
+        error_message = str(e).lower()
+        if "too many requests" in error_message or "rate limit" in error_message or "429" in error_message:
+            print("❌ Screener error: Too Many Requests. Rate limited. Try after a while.")
+            return jsonify({
+                "error": "❌ Screener error: Too Many Requests. Rate limited. Try after a while."
+            }), 429
+        
         print("❌ Screener error:", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"❌ Screener error: {str(e)}"}), 500
+
 
 
 def clean_nans(obj):
