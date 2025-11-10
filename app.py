@@ -443,7 +443,7 @@ def stream():
    # if origin not in ALLOWED_ORIGINS:
    #     origin = None  # Don't send Access-Control-Allow-Origin if not allowed
 
-
+    #Added a comment only for spoofing into reloading server container        
     #return Response(event_stream(), mimetype="text/event-stream")
     response = Response(event_stream(), mimetype="text/event-stream")
 
