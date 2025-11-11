@@ -16,7 +16,7 @@ from datetime import datetime
 import pytz
 import math
 import time
-from queue import Queue
+from queue import Queue, Empty
 import json
 
 app = Flask(__name__)
