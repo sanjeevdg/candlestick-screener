@@ -368,11 +368,14 @@ latest_data = {}        # { symbol: { ...last quote... } }
 # === WebSocket handler ===
 def message_handler(message):
     try:
+        print("Incoming message keys:", message.keys())
+        print("Full message:", message)
         data = {
             "symbol": message.get("id"),
             "price": message.get("price"),
+            "change": message.get("change"),
             "percentchange": message.get("change_percent"),
-            "volume": message.get("day_volume"),
+            
         }
         payload = json.dumps(data)  # ✅ Works now
         for conn in clients:
@@ -417,7 +420,7 @@ def stream():
                     yield f"data: {{\"heartbeat\": {int(time.time())}}}\n\n"
         except GeneratorExit:
             clients.remove(q)
-
+    #http://localhost:3000
     response = Response(event_stream(), mimetype="text/event-stream")
     response.headers["Access-Control-Allow-Origin"] = "https://sanjeevdg.github.io"
     response.headers["Cache-Control"] = "no-cache"
