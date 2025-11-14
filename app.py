@@ -23,6 +23,7 @@ from queue import Queue, Empty
 import json
 #import finnhub
 from io import StringIO
+import ssl
 #from get_symbols import get_symbols_from_eodhd 
 
 
@@ -51,10 +52,21 @@ CORS(app, origins=[
 ], resources={r"/api/*": {"origins": ["http://localhost:3000", "https://sanjeevdg.github.io"]}})
 #CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
 
+
+
+# Render.com Fix - Prevent urllib3 TLS recursion on Python 3.13
+try:
+    ssl.SSLContext.minimum_version = ssl.TLSVersion.TLSv1
+except Exception:
+    pass
+
+
 FINNHUB_API_KEY = "d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90"  # 🔑 Replace with your Finnhub key
 FINNHUB_BASE = "https://finnhub.io/api/v1"
 
 #finnhub_client = finnhub.Client(api_key='d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90')
+
+
 
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
@@ -618,7 +630,7 @@ def custom_screener2():
         print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
 
-
+'''
 
 def clean_nans(obj):
     """Recursively replace NaN/inf/-inf with None for JSON safety."""
@@ -630,7 +642,7 @@ def clean_nans(obj):
         return None
     return obj
 
-'''
+
 latest_quotes = {}
 symbols_to_watch = []
 ws = None
