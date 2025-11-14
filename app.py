@@ -39,7 +39,7 @@ ALLOWED_ORIGINS = [
 FINNHUB_API_KEY = "d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90"  # <-- replace with your own
 CACHE_SP500 = "gainers_sp500_cache.json"
 CACHE_NASDAQ100 = "gainers_nasdaq100_cache.json"
-CACHE_TTL = 24 * 3600  # 24 hours
+CACHE_TTL = 1 * 3600  # 1 hour
 BATCH_SIZE = 50
 MAX_THREADS = 8
 
