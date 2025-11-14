@@ -1,31 +1,48 @@
 from flask import Flask, jsonify, Response, request
 import requests
+import warnings
 from flask_cors import CORS, cross_origin
 import os
 import pandas as pd
 import yfinance as yf
 from yfinance import EquityQuery
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 #from yfinance.scrapers.quote import quote as yf_quote
 #from yahoo_fin import stock_info as si
 #import yahoo_fin.stock_info as si
 #from yahoo_fin.stock_info import _requests
 import threading
+import asyncio
+import aiohttp
 from yahoo_fin import stock_info as si
-from datetime import datetime 
+from datetime import datetime, timedelta
 import pytz
 import math
 import time
 from queue import Queue, Empty
 import json
+import finnhub
+from io import StringIO
+#from get_symbols import get_symbols_from_eodhd 
+
+
 
 app = Flask(__name__)
 
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 ALLOWED_ORIGINS = [
     "https://sanjeevdg.github.io",
     "http://localhost:3000"
 ]
+
+FINNHUB_API_KEY = "d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90"  # <-- replace with your own
+CACHE_SP500 = "gainers_sp500_cache.json"
+CACHE_NASDAQ100 = "gainers_nasdaq100_cache.json"
+CACHE_TTL = 24 * 3600  # 24 hours
+BATCH_SIZE = 50
+MAX_THREADS = 8
+
 
 #//CORS(app, origins=ALLOWED_ORIGINS)
 CORS(app, origins=[
@@ -33,6 +50,11 @@ CORS(app, origins=[
     "https://sanjeevdg.github.io"
 ], resources={r"/api/*": {"origins": ["http://localhost:3000", "https://sanjeevdg.github.io"]}})
 #CORS(app, origins=["http://localhost:3000","https://sanjeevdg.github.io"])
+
+FINNHUB_API_KEY = "d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90"  # 🔑 Replace with your Finnhub key
+FINNHUB_BASE = "https://finnhub.io/api/v1"
+
+finnhub_client = finnhub.Client(api_key='d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90')
 
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
@@ -69,6 +91,291 @@ def get_company_info(symbol):
         return info.get("shortName", symbol)
     except Exception:
         return symbol
+
+
+
+
+
+def load_cache(cache_file):
+    if not os.path.exists(cache_file):
+        return {"timestamp": 0, "results": []}
+    try:
+        with open(cache_file, "r") as f:
+            data = json.load(f)
+        if time.time() - data.get("timestamp", 0) < CACHE_TTL:
+            print(f"✅ Loaded cache from {cache_file}")
+            return data
+        else:
+            print(f"♻️ Cache expired for {cache_file}")
+            return {"timestamp": 0, "results": []}
+    except Exception:
+        return {"timestamp": 0, "results": []}
+
+
+def save_cache(cache_file, data):
+    try:
+        with open(cache_file, "w") as f:
+            json.dump(data, f)
+        print(f"💾 Saved cache to {cache_file}")
+    except Exception as e:
+        print(f"⚠️ Failed to save cache {cache_file}: {e}")
+
+
+
+
+'''
+# ---------- Load cache (if exists and fresh) ----------
+def load_cache():
+    if not os.path.exists(CACHE_FILE):
+        return {"timestamp": 0, "results": []}
+    try:
+        with open(CACHE_FILE, "r") as f:
+            data = json.load(f)
+        if time.time() - data.get("timestamp", 0) < CACHE_TTL:
+            print("✅ Loaded cache from file")
+            return data
+        else:
+            print("♻️ Cache file expired — refreshing")
+            return {"timestamp": 0, "results": []}
+    except Exception:
+        return {"timestamp": 0, "results": []}
+
+
+def save_cache(data):
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump(data, f)
+        print("💾 Cache saved to file")
+    except Exception as e:
+        print(f"⚠️ Failed to save cache: {e}")
+
+
+cache_data = load_cache()
+'''
+#https://en.wikipedia.org/wiki/Nasdaq-100
+'''
+def get_sp500_tickers():
+    url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/130.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    # Sanity check to ensure we actually got a Wikipedia page
+    if "<table" not in response.text or "Symbol" not in response.text:
+        raise RuntimeError("Wikipedia page returned unexpected content")
+
+    tables = pd.read_html(StringIO(html))
+    for table in tables:
+        for col in table.columns:
+            if "symbol" in str(col).lower() or "ticker" in str(col).lower():
+                tickers = table[col].astype(str).str.replace(".", "-", regex=False).tolist()
+                return tickers
+    raise ValueError("No Symbol/Ticker column found in Wikipedia table.")
+'''
+
+def get_sp500_tickers():
+    url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/130.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    html = response.text
+
+    # Sanity check: confirm table is present
+    if "<table" not in html or "Symbol" not in html:
+        raise RuntimeError("Wikipedia page returned unexpected content")
+
+    # IMPORTANT: wrap HTML string so lxml doesn't treat it as a filename
+    tables = pd.read_html(StringIO(html))
+
+    # Find table containing "Symbol" or "Ticker"
+    for table in tables:
+        for col in table.columns:
+            if "symbol" in str(col).lower() or "ticker" in str(col).lower():
+                tickers = (
+                    table[col]
+                    .astype(str)
+                    .str.replace(".", "-", regex=False)
+                    .tolist()
+                )
+                return tickers
+
+    raise ValueError("No Symbol/Ticker column found in Wikipedia table.")
+
+# ---------- STEP 2: Compute changes ----------
+def compute_changes(batch):
+    results = []
+    try:
+        data = yf.download(batch, period="6mo", interval="1d", group_by="ticker", progress=False)
+        for ticker in batch:
+            try:
+                close = data[ticker]["Close"]
+                if close.empty:
+                    continue
+
+                start_6m, end_6m = close.iloc[0], close.iloc[-1]
+                change_6m = (end_6m - start_6m) / start_6m * 100 if start_6m else None
+
+                mid_index = int(len(close) * 0.5)
+                start_3m, end_3m = close.iloc[mid_index], close.iloc[-1]
+                change_3m = (end_3m - start_3m) / start_3m * 100 if start_3m else None
+
+                results.append({
+                    "symbol": ticker,
+                    "change_3m_pct": round(change_3m, 2) if change_3m is not None else None,
+                    "change_6m_pct": round(change_6m, 2) if change_6m is not None else None
+                })
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return results
+
+
+# ---------- STEP 3: Batch + parallel processing ----------
+def get_top_gainers_data(tickers):
+    batches = [tickers[i:i + BATCH_SIZE] for i in range(0, len(tickers), BATCH_SIZE)]
+    all_results = []
+
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        futures = [executor.submit(compute_changes, batch) for batch in batches]
+        for f in as_completed(futures):
+            all_results.extend(f.result())
+
+    df = pd.DataFrame(all_results).dropna(subset=["change_6m_pct"])
+    df["change_6m_pct"] = df["change_6m_pct"].astype(float)
+    df = df.sort_values("change_6m_pct", ascending=False).head(20)
+    return df.to_dict(orient="records")
+
+@app.route("/api/top_gainers_sp500", methods=["GET"])
+def top_gainers_sp500():
+    cache_file = CACHE_SP500
+    cache_data = load_cache(cache_file)
+    now = time.time()
+
+    # Serve cached version
+    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
+        print("✅ Serving S&P 500 from cache")
+        return jsonify(cache_data["results"])
+
+    print("♻️ Refreshing S&P 500 gainers...")
+    tickers = get_sp500_tickers()
+    data = get_top_gainers_data(tickers)
+
+    cache_data = {"timestamp": now, "results": data}
+    save_cache(cache_file, cache_data)
+
+    return jsonify(data)
+
+
+'''
+# ---------- STEP 4: Flask Endpoint ----------
+@app.route("/api/top_gainers_sp500", methods=["GET"])
+def top_gainers_sp500():
+    global cache_data
+    now = time.time()
+
+    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
+        print("✅ Serving from cache (memory)")
+        return jsonify(cache_data["results"])
+
+    print("♻️ Refreshing S&P 500 gainers...")
+    tickers = get_sp500_tickers()
+    data = get_top_gainers_data(tickers)
+
+    cache_data = {"timestamp": now, "results": data}
+    save_cache(cache_data)
+    return jsonify(data)
+'''
+
+
+def get_nasdaq100_tickers():
+    url = "https://en.wikipedia.org/wiki/Nasdaq-100"
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/130.0.0.0 Safari/537.36"
+        ),
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    response = requests.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    html = response.text
+
+    if "<table" not in html:
+        raise RuntimeError("Wikipedia returned unexpected content for NASDAQ-100")
+
+    tables = pd.read_html(StringIO(html))
+
+    # NASDAQ-100 table has column "Ticker" but we check flexibly
+    for table in tables:
+        for col in table.columns:
+            if "ticker" in str(col).lower() or "symbol" in str(col).lower():
+
+                tickers = (
+                    table[col]
+                    .astype(str)
+                    .str.replace(".", "-", regex=False)  # Yahoo-style tickers
+                    .tolist()
+                )
+
+                # NASDAQ-100 table contains header rows sometimes – filter weird entries
+                tickers = [t for t in tickers if t.isalnum() or "-" in t]
+
+                return tickers
+
+    raise ValueError("No ticker column found in NASDAQ-100 table.")
+
+
+@app.route("/api/top_gainers_nasdaq100", methods=["GET"])
+def top_gainers_nasdaq100():
+    cache_file = CACHE_NASDAQ100
+    cache_data = load_cache(cache_file)
+    now = time.time()
+
+    # Serve cached version
+    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
+        print("✅ Serving NASDAQ-100 from cache")
+        return jsonify(cache_data["results"])
+
+    print("♻️ Refreshing NASDAQ-100 gainers...")
+    tickers = get_nasdaq100_tickers()
+    data = get_top_gainers_data(tickers)
+
+    cache_data = {"timestamp": now, "results": data}
+    save_cache(cache_file, cache_data)
+
+    return jsonify(data)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -248,6 +555,85 @@ def custom_screener():
         
         print("❌ Screener error:", e)
         return jsonify({"error": f"❌ Screener error: {str(e)}"}), 500
+
+
+
+
+async def fetch_quote(session, symbol):
+    """Fetch a single symbol quote concurrently."""
+    url = f"{FINNHUB_BASE}/quote"
+    try:
+        async with session.get(url, params={"symbol": symbol, "token": FINNHUB_API_KEY}) as resp:
+            if resp.status != 200:
+                return None
+            data = await resp.json()
+            price = data.get("c")
+            open_price = data.get("o")
+            dp = data.get("dp")
+            if not price or not open_price or price == 0 or open_price == 0:
+                return None
+            if dp is None:
+                dp = ((price - open_price) / open_price) * 100
+            return {
+                "symbol": symbol,
+                "price": round(price, 2),
+                "change": round(price - open_price, 2),
+                "percentchange": round(dp, 2),
+            }
+    except Exception:
+        return None
+
+
+@app.route("/api/screen_by_criteria_finnhub", methods=["GET"])
+def custom_screener2():
+    region = request.args.get("region", "us").lower()
+    min_price = float(request.args.get("min_price", 0))
+    max_price = float(request.args.get("max_price", 1_000_000))
+    min_change = float(request.args.get("min_change", 0))
+    sort_field = request.args.get("sort_field", "percentchange")
+    sort_asc = request.args.get("sort_asc", "false").lower() == "true"
+    limit = int(request.args.get("limit", 5))
+
+    async def run_screen():
+        print("\n=== [Finnhub Screener - async] START ===")
+        exchange = "US" if region == "us" else region.upper()
+
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            # Fetch symbol list
+            async with session.get(f"{FINNHUB_BASE}/stock/symbol",
+                                   params={"exchange": exchange, "token": FINNHUB_API_KEY}) as resp:
+                all_symbols = await resp.json()
+
+            print(f"→ Retrieved {len(all_symbols)} symbols")
+
+            # Sample subset for rate safety
+            sample = [s.get("symbol") for s in all_symbols[:80] if s.get("symbol")]
+            print(f"Fetching quotes for {len(sample)} symbols concurrently...")
+
+            quotes = await asyncio.gather(*[fetch_quote(session, sym) for sym in sample])
+            results = [q for q in quotes if q]
+
+            # Apply filters
+            filtered = [
+                r for r in results
+                if min_price <= r["price"] <= max_price and r["change"] >= min_change
+            ]
+
+            print(f"✅ Retrieved {len(filtered)} valid quotes")
+
+            if not filtered:
+                return []
+
+            df = pd.DataFrame(filtered)
+            df = df.sort_values(by=sort_field, ascending=sort_asc).head(limit)
+            return clean_nans(df.to_dict(orient="records"))
+
+    try:
+        results = asyncio.run(run_screen())
+        return jsonify(results)
+    except Exception as e:
+        print("❌ Error:", e)
+        return jsonify({"error": str(e)}), 500
 
 
 

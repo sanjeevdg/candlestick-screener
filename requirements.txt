@@ -8,4 +8,6 @@ yfinance
 gunicorn
 yahoo_fin
 gevent>=24.2.1
+asyncio
+aiohttp
 
