@@ -21,7 +21,7 @@ import math
 import time
 from queue import Queue, Empty
 import json
-import finnhub
+#import finnhub
 from io import StringIO
 #from get_symbols import get_symbols_from_eodhd 
 
@@ -54,7 +54,7 @@ CORS(app, origins=[
 FINNHUB_API_KEY = "d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90"  # 🔑 Replace with your Finnhub key
 FINNHUB_BASE = "https://finnhub.io/api/v1"
 
-finnhub_client = finnhub.Client(api_key='d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90')
+#finnhub_client = finnhub.Client(api_key='d3nr05hr01qtm4jdum8gd3nr05hr01qtm4jdum90')
 
 
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "EALVYO7ECX58VA4T")
@@ -558,7 +558,7 @@ def custom_screener():
 
 
 
-
+'''
 async def fetch_quote(session, symbol):
     """Fetch a single symbol quote concurrently."""
     url = f"{FINNHUB_BASE}/quote"
