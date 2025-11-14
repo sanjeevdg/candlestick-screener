@@ -265,12 +265,13 @@ def get_top_gainers_data(tickers):
 
 @app.route("/api/top_gainers_sp500", methods=["GET"])
 def top_gainers_sp500():
+    force = request.args.get("force") == "1"  # 👈 NEW
     cache_file = CACHE_SP500
     cache_data = load_cache(cache_file)
     now = time.time()
 
-    # Serve cached version
-    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
+    # Serve cached version unless force refresh is requested
+    if not force and cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
         print("✅ Serving S&P 500 from cache")
         return jsonify(cache_data["results"])
 
@@ -283,26 +284,6 @@ def top_gainers_sp500():
 
     return jsonify(data)
 
-
-'''
-# ---------- STEP 4: Flask Endpoint ----------
-@app.route("/api/top_gainers_sp500", methods=["GET"])
-def top_gainers_sp500():
-    global cache_data
-    now = time.time()
-
-    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
-        print("✅ Serving from cache (memory)")
-        return jsonify(cache_data["results"])
-
-    print("♻️ Refreshing S&P 500 gainers...")
-    tickers = get_sp500_tickers()
-    data = get_top_gainers_data(tickers)
-
-    cache_data = {"timestamp": now, "results": data}
-    save_cache(cache_data)
-    return jsonify(data)
-'''
 
 
 def get_nasdaq100_tickers():
@@ -348,12 +329,13 @@ def get_nasdaq100_tickers():
 
 @app.route("/api/top_gainers_nasdaq100", methods=["GET"])
 def top_gainers_nasdaq100():
+    force = request.args.get("force") == "1"  # 👈 NEW
     cache_file = CACHE_NASDAQ100
     cache_data = load_cache(cache_file)
     now = time.time()
 
-    # Serve cached version
-    if cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
+    # Serve cached version unless force refresh is requested
+    if not force and cache_data["results"] and (now - cache_data["timestamp"] < CACHE_TTL):
         print("✅ Serving NASDAQ-100 from cache")
         return jsonify(cache_data["results"])
 
@@ -365,6 +347,7 @@ def top_gainers_nasdaq100():
     save_cache(cache_file, cache_data)
 
     return jsonify(data)
+
 
 
 
@@ -697,22 +680,12 @@ def subscribe_symbols():
 
     return jsonify({"status": "subscribed", "symbols": symbols_to_watch})
 
-@app.route("/api/quotes", methods=["GET"])
-def get_quotes():
-    """Return latest streamed data for the requested symbols."""
-    symbols = request.args.get("symbols")
-    if not symbols:
-        return jsonify([])
 
-    symbols = [s.strip().upper() for s in symbols.split(",")]
-
-    data = [latest_quotes.get(s, {"symbol": s, "error": "no data yet"}) for s in symbols]
-    return jsonify(data)
 '''
 
 # Global live quote cache and WebSocket reference
 
-'''WORKING SNIPPET BWLOW
+'''
 latest_quotes = {}
 symbols_tracked = set()
 
@@ -742,11 +715,8 @@ def get_quotes():
         else:
             results.append({"error": "no data yet", "symbol": sym})
     return jsonify(results)
+
 '''
-
-
-
-
 clients = []           # all SSE connections
 tracked_symbols = set()
 latest_data = {}        # { symbol: { ...last quote... } }
@@ -822,10 +792,6 @@ def get_latest():
     return jsonify(list(latest_data.values()))
 
 
-
-
-
-'''
 def get_quote(symbol):
     try:
         ticker = yf.Ticker(symbol)
@@ -871,10 +837,6 @@ def quotes():
     # filter valid records
     results = [r for r in data if r.get("price") is not None]
     return jsonify(results)
-'''
-
-
-'''
 
 def fetch_quote(symbol):
     url = (
@@ -911,310 +873,7 @@ def quotes():
 
     return jsonify(data)
 
-'''
 
-
-
-
-
-@app.route("/api/most_active_symbols")
-def most_active_symbols():
-    try:
-        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=most_actives"
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json, text/plain, */*",
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
-        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
-
-        if not symbols:
-            raise ValueError("No symbols found in response")
-
-        return jsonify({"symbols": symbols})
-
-    except Exception as e:
-        print(f"Error fetching most active symbols: {e}")
-        return jsonify({"error": "Could not fetch symbols"}), 500
-
-
-
-@app.route("/api/day_gainers")
-def day_gainers():
-    try:
-        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=day_gainers"
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json, text/plain, */*",
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
-        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
-
-        if not symbols:
-            raise ValueError("No symbols found in response")
-
-        return jsonify({"symbols": symbols})
-
-    except Exception as e:
-        print(f"Error fetching day gainers symbols: {e}")
-        return jsonify({"error": "Could not fetch symbols"}), 500
-
-
-
-
-@app.route("/api/day_losers")
-def day_losers():
-    try:
-        url = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=day_losers"
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json, text/plain, */*",
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        quotes = data.get("finance", {}).get("result", [])[0].get("quotes", [])
-        symbols = [q.get("symbol") for q in quotes if q.get("symbol")]
-
-        if not symbols:
-            raise ValueError("No symbols found in response")
-
-        return jsonify({"symbols": symbols})
-
-    except Exception as e:
-        print(f"Error fetching day losers symbols: {e}")
-        return jsonify({"error": "Could not fetch symbols"}), 500
-
-
-
-def clean_json(obj):
-    """Recursively replace NaN and Infinity with None for valid JSON."""
-    if isinstance(obj, dict):
-        return {k: clean_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [clean_json(i) for i in obj]
-    elif isinstance(obj, float):
-        if math.isnan(obj) or math.isinf(obj):
-            return None
-        return obj
-    else:
-        return obj
-
-
-
-@app.route("/api/patterns", methods=["GET"])
-def get_patterns():
-    symbols_str = request.args.get("symbols")
-    if not symbols_str:
-        return jsonify({"error": "symbols param required"}), 400
-
-    symbols = [s.strip().upper() for s in symbols_str.split(",") if s.strip()]
-
-    try:
-        data = yf.download(
-            tickers=symbols,
-            period="3mo",
-            interval="1d",
-            group_by="ticker",
-            threads=True,
-            auto_adjust=True,
-            progress=False,
-        )
-
-        results = []
-
-        for symbol in symbols:
-            try:
-                df = data[symbol] if isinstance(data.columns, pd.MultiIndex) else data
-                if df.empty:
-                    results.append({"symbol": symbol, "error": "no data"})
-                    continue
-
-                consolidating = bool(is_consolidating(df))
-                breaking_out = bool(is_breaking_out(df))
-
-                latest_close = float(df["Close"].iloc[-1])
-                prev_close = float(df["Close"].iloc[-2]) if len(df) > 1 else latest_close
-                percent_change = round(((latest_close - prev_close) / prev_close) * 100, 2)
-
-                results.append({
-                    "symbol": symbol,
-                    "latest_close": round(latest_close, 2),
-                    "percent_change": percent_change,
-                    "consolidating": consolidating,
-                    "breaking_out": breaking_out
-                })
-            except Exception as e:
-                results.append({
-                    "symbol": symbol,
-                    "error": str(e)
-                })
-
-        safe_results = clean_json(results)         
-
-        return jsonify(safe_results)
-
-    except Exception as e:
-        print(f"Error fetching patterns: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-YAHOO_URL = "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved"
-
-@app.route("/api/most_actives")
-def most_actives():
-    try:
-        # Try yfinance helper if available
-        try:
-            tickers = yf.get_day_most_active()
-            if tickers is not None and len(tickers) > 0:
-                results = [
-                    {
-                        "symbol": t.get("symbol"),
-                        "name": t.get("shortName") or t.get("longName") or "N/A",
-                        "price": t.get("regularMarketPrice"),
-                        "change": t.get("regularMarketChangePercent"),
-                        "volume": t.get("regularMarketVolume")
-                    }
-                    for t in tickers
-                ]
-                return jsonify({"data": results})
-        except Exception:
-            # fallback to manual fetch
-            pass
-
-        # Manual Yahoo Finance Screener API
-        params = {
-            "count": 100,
-            "scrIds": "most_actives",
-        }
-
-        response = requests.get(YAHOO_URL, params=params, timeout=10)
-
-        if response.status_code != 200:
-            return jsonify({
-                "error": f"Yahoo API HTTP {response.status_code}",
-                "body": response.text[:200]  # show first part of response
-            }), 502
-
-        # Ensure JSON is valid
-        try:
-            data = response.json()
-        except ValueError:
-            return jsonify({
-                "error": "Invalid JSON from Yahoo API",
-                "body": response.text[:200]
-            }), 502
-
-        # Extract quotes safely
-        quotes = data.get("finance", {}).get("result", [{}])[0].get("quotes", [])
-        if not quotes:
-            return jsonify({"error": "No quotes found in Yahoo response"}), 502
-
-        results = [
-            {
-                "symbol": q.get("symbol"),
-                "name": q.get("shortName") or q.get("longName") or "N/A",
-                "price": q.get("regularMarketPrice"),
-                "change": q.get("regularMarketChangePercent"),
-                "volume": q.get("regularMarketVolume"),
-            }
-            for q in quotes
-            if q.get("symbol")
-        ]
-
-        return jsonify({"data": results})
-
-    except Exception as e:
-        print("Error in Python fallback:", e)
-        return jsonify({"error": str(e)}), 500
-
-
-
-@app.route("/api/breakouts")
-def get_breakouts():
-    print("🚀 Hit /api/breakouts")
-    results = []
-
-    base_dir = "datasets/daily"
-    if not os.path.exists(base_dir):
-        print("❌ datasets/daily folder not found")
-        return jsonify({"error": "datasets/daily folder not found"}), 404
-
-    for filename in os.listdir(base_dir):
-        print("🗂 Processing:", filename)
-        if not filename.endswith(".csv"):
-            continue
-
-        path = os.path.join(base_dir, filename)
-        df = pd.read_csv(path)
-        print("✅ Read file", path, "rows:", len(df))
-
-        if df.empty or len(df) < 2:
-            continue
-
-        symbol = filename.replace(".csv", "")
-        company_name = get_company_info(symbol)
-
-        # Latest candle
-        latest = df.iloc[-1]
-        prev_close = df.iloc[-2]["Close"] if len(df) >= 2 else latest["Close"]
-
-        # Compute derived metrics
-        sell = round(latest["Open"], 2)
-        buy = round(latest["Close"], 2)
-        high = round(latest["High"], 2)
-        low = round(latest["Low"], 2)
-        close = round(latest["Close"], 2)
-        change = round(buy - prev_close, 2)
-        pct_change = round((change / prev_close) * 100, 2) if prev_close else 0
-
-        chart_url = f"https://finviz.com/chart.ashx?t={symbol}&ty=c&ta=1&p=d&s=l"
-
-        if is_consolidating(df):
-            status = "consolidating"
-        elif is_breaking_out(df):
-            status = "breaking_out"
-        else:
-            status = "neutral"
-
-        results.append({
-            "company": company_name,
-            "symbol": symbol,
-            "sell": sell,
-            "buy": buy,
-            "high": high,
-            "low": low,
-            "close": close,
-            "change": change,
-            "%change": pct_change,
-            "status": status,
-            "chart": chart_url
-        })
-
-    return jsonify(results)
-
-
-@app.route("/ping")
-def ping():
-    return jsonify({"msg": "pong"})
-
-
-
-
-'''
 @app.route("/api/stock_extras")
 def stock_extras():
     symbol = request.args.get("symbol")
