@@ -1,0 +1,89 @@
+@app.route("/api/scanner")
+def scanner():
+
+    file_path = request.args.get("file", "data/bars_5Min.csv")
+    strategy = request.args.get("strategy", "macd")
+
+    df = pd.read_csv(file_path)
+    df.columns = [c.lower() for c in df.columns]
+
+    for col in ["open","high","low","close","volume"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    results = []
+
+    for symbol, g in df.groupby("symbol"):
+
+        g = g.sort_values("time").copy()
+        close = g["close"].values
+
+        signal_state = "NONE"
+
+        # -------------------
+        # MACD STRATEGY
+        # -------------------
+        if strategy == "macd":
+
+            macd, signal, hist = talib.MACD(close)
+
+            g["macd"] = macd
+            g["signal"] = signal
+
+            g["entry"] = (g["macd"] > g["signal"]) & (g["macd"].shift(1) <= g["signal"].shift(1))
+            g["exit"] = (g["macd"] < g["signal"]) & (g["macd"].shift(1) >= g["signal"].shift(1))
+
+        # -------------------
+        # ROC STRATEGY
+        # -------------------
+        elif strategy == "roc":
+
+            roc = talib.ROC(close, timeperiod=10)
+
+            g["roc"] = roc
+
+            g["entry"] = (g["roc"] > 0) & (g["roc"].shift(1) <= 0)
+            g["exit"] = (g["roc"] < 0) & (g["roc"].shift(1) >= 0)
+
+        # -------------------
+        # EMA CROSS STRATEGY
+        # -------------------
+        elif strategy == "ema_cross":
+
+            ema_fast = talib.EMA(close, timeperiod=9)
+            ema_slow = talib.EMA(close, timeperiod=21)
+
+            g["fast"] = ema_fast
+            g["slow"] = ema_slow
+
+            g["entry"] = (g["fast"] > g["slow"]) & (g["fast"].shift(1) <= g["slow"].shift(1))
+            g["exit"] = (g["fast"] < g["slow"]) & (g["fast"].shift(1) >= g["slow"].shift(1))
+
+        # -------------------
+        # RSI STRATEGY
+        # -------------------
+        elif strategy == "rsi":
+
+            rsi = talib.RSI(close, timeperiod=14)
+
+            g["rsi"] = rsi
+
+            g["entry"] = (g["rsi"] > 50) & (g["rsi"].shift(1) <= 50)
+            g["exit"] = (g["rsi"] < 50) & (g["rsi"].shift(1) >= 50)
+
+        last = g.iloc[-1]
+
+        if last["entry"]:
+            signal_state = "LONG"
+        elif last["exit"]:
+            signal_state = "EXIT"
+
+        results.append({
+            "symbol": symbol,
+            "signal": signal_state,
+            "price": float(last["close"])
+        })
+
+    print(f"Strategy: {strategy}")
+    print(f"Symbols scanned: {len(results)}")
+
+    return jsonify(results)

@@ -1,0 +1,75 @@
+'''
+def check_entry(df,symbol):
+    global last_entry_price
+
+    if len(df) < 30:
+        return False, None
+    
+    last = df.iloc[-1]
+
+    if "atr" not in df.columns:
+        df["tr"] = np.maximum(
+            df["high"] - df["low"],
+            np.maximum(
+                abs(df["high"] - df["close"].shift()),
+                abs(df["low"] - df["close"].shift())
+            )
+        )
+        df["atr"] = df["tr"].rolling(14).mean()
+
+    current_price = df["close"].iloc[-1]
+    atr = df["atr"].iloc[-1]
+
+    stop_loss = current_price - atr * 1.0
+    target    = current_price + atr * 2.5
+
+    if np.isnan(atr):
+        return False, 0
+
+    last_price = last_entry_price.get(symbol)    
+
+
+    if last_price is None:
+        last_entry_price[symbol] = current_price
+        return True, {
+            "entry_price": current_price,
+            "stop_loss": stop_loss,
+            "target": target,
+            "atr": atr
+        }
+
+    # --- SCALE-IN ---
+    if current_price <= last_price - atr:
+        last_entry_price[symbol] = current_price
+        return True, {
+            "entry_price": current_price,
+            "stop_loss": stop_loss,
+            "target": target,
+            "atr": atr
+        }
+
+    # --- FIRST ENTRY ---
+    if symbol not in last_entry_price:
+        last_entry_price[symbol] = current_price
+        return True, {
+            "entry_price": current_price,
+            "stop_loss": stop_loss,
+            "target": target,
+            "atr": atr
+        }
+
+    # --- SCALE-IN LOGIC ---
+    #last_price = last_entry_price[symbol]
+
+    if current_price <= last_price - atr:
+        last_entry_price[symbol] = current_price
+        return True, {
+            "entry_price": current_price,
+            "stop_loss": stop_loss,
+            "target": target,
+            "atr": atr
+        }  # buy another lot
+           
+    return False, None
+'''
+ 

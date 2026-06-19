@@ -1,0 +1,133 @@
+# alpaca_stream.py
+import threading
+from typing import Set
+from alpaca.data.live.stock import StockDataStream
+from alpaca.data.enums import DataFeed
+
+API_KEY = "PKC7D4XB4OTV2VDEFUF5BRL33P"
+API_SECRET = "DZxMp2TBaqQWZH3seGm7ZSWbHjw25xLBD7ZGrG4F4GaF"
+
+ 
+    
+
+
+_stream: StockDataStream | None = None
+stream_started = False
+_stream_lock = threading.Lock()
+
+_subscribed: Set[str] = set()
+
+# ---------------------------------------------------
+# BAR HANDLER
+# ---------------------------------------------------
+
+async def handle_bar(bar):
+    try:
+        from app import socketio
+    except Exception:
+        return
+
+    socketio.emit(
+        "realtime_bar",
+        {
+            "symbol": bar.symbol,
+            "time": int(bar.timestamp.timestamp()),
+            "open": bar.open,
+            "high": bar.high,
+            "low": bar.low,
+            "close": bar.close,
+            "volume": bar.volume,
+        },
+        broadcast=True,
+    )
+
+
+def start_stream(socketio):
+    global stream, stream_started
+
+    if stream_started:
+        return  # 🚫 DO NOTHING
+
+    stream_started = True
+
+    stream = StockDataStream(
+        API_KEY,
+        API_SECRET,
+        feed=DataFeed.IEX
+    )
+
+    
+    async def on_bar(bar):
+        socketio.emit("realtime_bar", bar._raw)
+
+    stream.subscribe_bars(on_bar, "*")    
+    
+    threading.Thread(
+        target=stream.run,
+        daemon=True
+    ).start()
+
+
+# ---------------------------------------------------
+# STREAM START (ONLY ONCE)
+# ---------------------------------------------------
+
+def ensure_stream_started():
+    global _stream, stream_started
+
+    with _stream_lock:
+        if stream_started:
+            return
+
+        print("🚀 Starting Alpaca websocket (ONCE)")
+
+        _stream = StockDataStream(
+            api_key=API_KEY,
+            secret_key=API_SECRET,
+            feed=DataFeed.IEX,
+        )
+
+        _stream.subscribe_bars(handle_bar)
+
+        threading.Thread(
+            target=_stream.run,
+            daemon=True,
+            name="alpaca-stream",
+        ).start()
+
+        stream_started = True
+
+# ---------------------------------------------------
+# SUBSCRIBE / UNSUBSCRIBE
+# ---------------------------------------------------
+
+def subscribe_symbol(symbol):
+    global stream, subscribed_symbols
+
+    if symbol in subscribed_symbols:
+        return
+
+    subscribed_symbols.add(symbol)
+    stream.subscribe_bars(symbol)
+    print(f"📡 Subscribed to {symbol}")
+
+
+
+def unsubscribe_symbol(raw):
+    if not _stream:
+        return
+
+    if isinstance(raw, dict):
+        raw = raw.get("symbol")
+
+    if not isinstance(raw, str):
+        return
+
+    clean = raw.split(":")[-1].upper()
+
+    if clean not in _subscribed:
+        return
+
+    print(f"🛑 Unsubscribed from {clean}")
+    _subscribed.remove(clean)
+    _stream.unsubscribe_bars(clean)

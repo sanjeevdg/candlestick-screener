@@ -1,0 +1,86 @@
+from alpaca.data.live import StockDataStream
+import pandas as pd
+import os
+from bot.strategy import MomentumStrategy
+from bot.execution import place_order
+from bot.indicators import compute_indicators
+from config import ALPACA_KEY, ALPACA_SECRET
+
+# symbols to trade
+SYMBOLS = ["PRSO","EDSA","CRE","ANTX","DAWN","SEV"]
+
+stream = StockDataStream(ALPACA_KEY, ALPACA_SECRET)
+
+# strategy instance
+strategy = MomentumStrategy()
+
+# store per-symbol data
+data = {}
+
+
+async def on_bar(bar):
+
+    print(f"BAR: {bar.symbol} {bar.timestamp} close={bar.close}")
+
+    print(f"Received bar {symbol} {bar.timestamp}")
+
+    if len(df) < 60:
+        print("Not enough data yet")
+        return
+
+    symbol = bar.symbol
+
+    row = {
+        "time": bar.timestamp,
+        "open": bar.open,
+        "high": bar.high,
+        "low": bar.low,
+        "close": bar.close,
+        "volume": bar.volume,
+    }
+
+    # initialize dataframe
+    if symbol not in data:
+        data[symbol] = pd.DataFrame()
+
+    # append new bar
+    data[symbol] = pd.concat(
+        [data[symbol], pd.DataFrame([row])],
+        ignore_index=True
+    )
+
+    df = data[symbol]
+
+    # need enough bars for indicators
+    if len(df) < 60:
+        return
+
+    df = compute_indicators(df)
+    data[symbol] = df
+    row = df.iloc[-1]
+    prev = df.iloc[-2]
+
+    atr_mean = df["ATR_14"].rolling(50).mean().iloc[-1]
+
+    signal = strategy.entry_signal(row, prev, atr_mean)
+
+    print(
+    f"{symbol} close={row['close']} "
+    f"ATR={row['ATR_14']:.4f} "
+    f"signal={signal}"
+)
+    if signal:
+        print(f"BUY SIGNAL: {symbol} @ {row['close']}")
+        place_order(symbol)
+
+
+def start_bot():
+
+    for symbol in SYMBOLS:
+        stream.subscribe_bars(on_bar, symbol)
+
+    print("🚀 Alpaca paper trading bot started")
+
+    stream.run()
+
+

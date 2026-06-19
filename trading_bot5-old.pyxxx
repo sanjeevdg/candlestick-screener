@@ -1,0 +1,293 @@
+import logging
+import pandas as pd
+
+from alpaca.data.live import StockDataStream
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.requests import StockSnapshotRequest
+from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import MarketOrderRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
+from config import ALPACA_KEY, ALPACA_SECRET
+from alpaca.data.requests import StockBarsRequest
+from alpaca.data.timeframe import TimeFrame
+from datetime import datetime, timedelta
+from alpaca.data.enums import DataFeed
+import json
+import talib
+import argparse
+
+
+# -------------------------------------------------------
+# Logging
+# -------------------------------------------------------
+data_client = StockHistoricalDataClient(ALPACA_KEY, ALPACA_SECRET)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s"
+)
+
+log = logging.getLogger("BOT")
+
+#SYMBOLS = data["symbols"]
+# =======================================================
+# MOMENTUM BOT
+# =======================================================
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--symbols")
+
+args = parser.parse_args()
+
+SYMBOLS = args.symbols.split(",")
+
+
+def preload_data():
+
+        print("Loading historical bars...")
+
+        end = datetime.utcnow()
+        start = end - timedelta(minutes=3000)
+
+        request = StockBarsRequest(
+            symbol_or_symbols=SYMBOLS,
+            timeframe=TimeFrame.Minute,
+            start=start,
+            end=end,
+            feed=DataFeed.IEX
+        )
+
+        bars = data_client.get_stock_bars(request)
+
+        for symbol in SYMBOLS:
+
+            df = bars.df.loc[symbol]
+
+            df = df.reset_index()
+
+            df.rename(columns={
+                "timestamp": "time"
+            }, inplace=True)
+
+            #data[symbol] = df
+
+            print(f"{symbol} loaded {len(df)} bars")    
+
+
+
+
+
+
+
+
+
+class MomentumScannerBot:
+
+    def __init__(self, key, secret):
+
+        self.key = key
+        self.secret = secret
+
+        self.trading_client = TradingClient(key, secret, paper=True)
+        self.data_client = StockHistoricalDataClient(key, secret)
+
+        self.stream = StockDataStream(key, secret, feed=DataFeed.IEX)
+
+        self.symbols = []
+        self.bars = {}
+
+        self.positions = {}
+
+        
+
+        log.info("Bot initialized")
+
+    # ---------------------------------------------------
+    # Scan market for top movers
+    # ---------------------------------------------------
+
+    def scan_top_movers(self):
+
+        log.info("Scanning top movers...")
+
+        universe = SYMBOLS
+
+        request = StockSnapshotRequest(symbol_or_symbols=universe)
+
+        snapshots = self.data_client.get_stock_snapshot(request)
+
+        movers = []
+
+        for symbol, snap in snapshots.items():
+
+            if snap.daily_bar and snap.previous_daily_bar:
+
+                price = snap.daily_bar.close
+                prev = snap.previous_daily_bar.close
+
+                change = (price - prev) / prev * 100
+
+                movers.append((symbol, change))
+
+        movers.sort(key=lambda x: x[1], reverse=True)
+
+        top = [m[0] for m in movers[:5]]
+
+        log.info(f"Top movers: {top}")
+
+        return top
+
+
+
+
+
+
+
+    # ---------------------------------------------------
+    # Place order
+    # ---------------------------------------------------
+
+    def place_order(self, symbol, side, qty=10):
+
+        log.info(f"{side.upper()} {symbol} x{qty}")
+
+        order = self.trading_client.submit_order(
+            MarketOrderRequest(
+                symbol=symbol,
+                qty=qty,
+                side=OrderSide.BUY if side == "buy" else OrderSide.SELL,
+                time_in_force=TimeInForce.DAY,
+                #extended_hours=True
+            )
+        )
+
+        log.info(f"Order sent {order.id}")
+
+    # ---------------------------------------------------
+    # Exit logic
+    # ---------------------------------------------------
+
+    def check_exit(self, symbol, price):
+
+        entry = self.positions[symbol]["entry"]
+
+        stop = entry * 0.97
+        target = entry * 1.05
+
+        if price <= stop:
+            log.info(f"STOP HIT {symbol}")
+            self.place_order(symbol, "sell")
+            del self.positions[symbol]
+
+        elif price >= target:
+            log.info(f"TARGET HIT {symbol}")
+            self.place_order(symbol, "sell")
+            del self.positions[symbol]
+    
+
+    # ---------------------------------------------------
+    # Bar handler
+    # ---------------------------------------------------
+
+    async def on_bar(self, bar):
+
+        s = bar.symbol
+        price = bar.close
+        volume = bar.volume
+
+        log.info(f"{s} close {price}")
+
+        self.bars[s].append({
+            "open": bar.open,
+            "high": bar.high,
+            "low": bar.low,
+            "close": bar.close,
+            "price": bar.close,
+            "volume": bar.volume
+        })
+        self.bars[s] = self.bars[s][-200:]
+        #df = pd.DataFrame(self.bars[s])
+        #df["avg_volume"] = df["volume"].rolling(20, min_periods=5).mean()
+        df = pd.DataFrame(self.bars[s])
+
+        if len(df) < 20:
+            return
+
+        df["vwap"] = (df["close"] * df["volume"]).cumsum() / df["volume"].cumsum()
+
+        df["avg_volume"] = df["volume"].rolling(20, min_periods=5).mean()
+
+        df["rvol"] = df["volume"] / df["avg_volume"]
+        #print(df.columns)
+        if len(df) < 10:
+            return
+
+        # -----------------------------------
+        # Exit if already in trade
+        # -----------------------------------
+
+        if s in self.positions:
+            self.check_exit(s, price)
+            return
+
+        # -----------------------------------
+        # Indicators
+        # -----------------------------------
+        vwap = df["vwap"].iloc[-1]
+        volume = df["volume"].iloc[-1]
+        avg_volume = df["avg_volume"].iloc[-1]
+    
+        momentum = df["price"].iloc[-1] - df["price"].iloc[-5]
+
+        breakout = price > vwap
+        volume_spike = volume > avg_volume * 1.2
+
+        if breakout and volume_spike and momentum > 0.13:
+    
+
+            log.info(f"MOMENTUM ENTRY {s}")
+
+            self.place_order(s, "buy")
+
+            self.positions[s] = {
+                "entry": price
+            }
+            
+        
+    # ---------------------------------------------------
+    # Start bot
+    # ---------------------------------------------------
+
+    def run(self):
+
+        preload_data()
+        self.symbols = self.scan_top_movers()
+
+        for s in self.symbols:
+
+            self.bars[s] = []
+
+            self.stream.subscribe_bars(self.on_bar, s)
+
+        log.info(f"Subscribed to {self.symbols}")
+
+        self.stream.run()
+
+
+# =======================================================
+# MAIN
+# =======================================================
+
+def main():
+
+
+    bot = MomentumScannerBot(
+        key="PKC7D4XB4OTV2VDEFUF5BRL33P",
+        secret="DZxMp2TBaqQWZH3seGm7ZSWbHjw25xLBD7ZGrG4F4GaF",
+    )
+
+    bot.run()
+
+
+if __name__ == "__main__":
+    main()

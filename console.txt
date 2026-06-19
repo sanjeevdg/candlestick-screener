@@ -1,0 +1,265 @@
+2026-03-11 01:13:00,409 | INFO | ANET price=140.13 vwap=140.39 vol=239.0 avg=500
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:13:00,412 | INFO | ALMS close 28.05
+2026-03-11 01:13:00,423 | INFO | ALMS price=28.05 vwap=28.01 vol=150.0 avg=292
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:14:00,393 | INFO | ANET close 140.12
+2026-03-11 01:14:00,404 | INFO | ANET price=140.12 vwap=140.37 vol=853.0 avg=521
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:14:00,408 | INFO | TENX close 13.89
+2026-03-11 01:14:00,419 | INFO | TENX price=13.89 vwap=13.54 vol=165.0 avg=874
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:15:00,390 | INFO | ALMS close 28.045
+2026-03-11 01:15:00,401 | INFO | ALMS price=28.05 vwap=28.01 vol=140.0 avg=286
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:15:00,457 | INFO | ANET close 139.98
+2026-03-11 01:15:00,469 | INFO | ANET price=139.98 vwap=140.35 vol=640.0 avg=528
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:16:00,388 | INFO | ANET close 139.87
+2026-03-11 01:16:00,400 | INFO | ANET price=139.87 vwap=140.33 vol=640.0 avg=541
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:17:00,231 | INFO | ALMS close 28.09
+2026-03-11 01:17:00,242 | INFO | ALMS price=28.09 vwap=28.01 vol=130.0 avg=281
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:17:00,246 | INFO | TENX close 13.88
+2026-03-11 01:17:00,257 | INFO | TENX price=13.88 vwap=13.54 vol=100.0 avg=814
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:18:00,364 | INFO | ALMS close 28.065
+2026-03-11 01:18:00,376 | INFO | ALMS price=28.07 vwap=28.01 vol=614.0 avg=292
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:18:00,379 | INFO | ANET close 139.875
+2026-03-11 01:18:00,390 | INFO | ANET price=139.88 vwap=140.32 vol=205.0 avg=521
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:19:00,379 | INFO | ALMS close 28.05
+2026-03-11 01:19:00,390 | INFO | ALMS price=28.05 vwap=28.02 vol=466.0 avg=298
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:20:00,760 | INFO | ANET close 139.575
+2026-03-11 01:20:00,772 | INFO | ANET price=139.57 vwap=140.29 vol=357.0 avg=507
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:20:00,775 | INFO | JBIO close 14.6
+2026-03-11 01:20:00,786 | INFO | JBIO price=14.60 vwap=14.62 vol=100.0 avg=137
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:21:00,377 | INFO | ALMS close 28.05
+2026-03-11 01:21:00,389 | INFO | ALMS price=28.05 vwap=28.02 vol=277.0 avg=300
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:21:00,392 | INFO | ANET close 139.39
+2026-03-11 01:21:00,404 | INFO | ANET price=139.39 vwap=140.21 vol=1302.0 avg=527
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:22:00,473 | INFO | ALMS close 28.09
+2026-03-11 01:22:00,485 | INFO | ALMS price=28.09 vwap=28.02 vol=513.0 avg=312
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:22:00,488 | INFO | ANET close 139.425
+2026-03-11 01:22:00,499 | INFO | ANET price=139.43 vwap=140.17 vol=588.0 avg=534
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:23:00,541 | INFO | ALMS close 28.06
+2026-03-11 01:23:00,552 | INFO | ALMS price=28.06 vwap=28.03 vol=555.0 avg=327
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:23:00,555 | INFO | ANET close 139.42
+2026-03-11 01:23:00,567 | INFO | ANET price=139.42 vwap=140.12 vol=1025.0 avg=560
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:24:00,377 | INFO | ANET close 139.38
+2026-03-11 01:24:00,389 | INFO | ANET price=139.38 vwap=140.05 vol=1280.0 avg=590
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:24:00,392 | INFO | TENX close 14.0
+2026-03-11 01:24:00,403 | INFO | TENX price=14.00 vwap=13.62 vol=2195.0 avg=913
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:24:00,407 | INFO | JBIO close 14.56
+2026-03-11 01:24:00,418 | INFO | JBIO price=14.56 vwap=14.61 vol=401.0 avg=154
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:24:00,421 | INFO | ALMS close 28.005
+2026-03-11 01:24:00,431 | INFO | ALMS price=28.00 vwap=28.03 vol=823.0 avg=349
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:25:00,856 | INFO | TENX close 14.265
+2026-03-11 01:25:00,867 | INFO | TENX price=14.27 vwap=13.62 vol=100.0 avg=859
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:25:00,870 | INFO | JBIO close 14.56
+2026-03-11 01:25:00,882 | INFO | JBIO price=14.56 vwap=14.61 vol=127.0 avg=152
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:25:00,886 | INFO | ANET close 139.345
+2026-03-11 01:25:00,897 | INFO | ANET price=139.34 vwap=139.96 vol=1798.0 avg=619
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:25:00,901 | INFO | ALMS close 28.015
+2026-03-11 01:25:00,911 | INFO | ALMS price=28.02 vwap=28.03 vol=3087.0 avg=448
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:25:00,913 | INFO | ATLX close 5.37
+2026-03-11 01:26:00,531 | INFO | TENX close 14.475
+2026-03-11 01:26:00,545 | INFO | TENX price=14.47 vwap=13.70 vol=1200.0 avg=880
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:26:00,547 | INFO | ALMS close 28.03
+2026-03-11 01:26:00,554 | INFO | ALMS price=28.03 vwap=28.03 vol=255.0 avg=447
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:26:00,556 | INFO | ANET close 139.17
+2026-03-11 01:26:00,563 | INFO | ANET price=139.17 vwap=139.88 vol=1610.0 avg=663
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:27:00,370 | INFO | JBIO close 14.56
+2026-03-11 01:27:00,382 | INFO | JBIO price=14.56 vwap=14.60 vol=211.0 avg=155
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:27:00,385 | INFO | ATLX close 5.39
+2026-03-11 01:27:00,387 | INFO | ALMS close 28.03
+2026-03-11 01:27:00,399 | INFO | ALMS price=28.03 vwap=28.03 vol=265.0 avg=451
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:27:00,401 | INFO | ANET close 139.16
+2026-03-11 01:27:00,413 | INFO | ANET price=139.16 vwap=139.79 vol=2346.0 avg=730
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:28:00,835 | INFO | ANET close 139.275
+2026-03-11 01:28:00,847 | INFO | ANET price=139.28 vwap=139.72 vol=2255.0 avg=794
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:28:00,850 | INFO | TENX close 14.46
+2026-03-11 01:28:00,861 | INFO | TENX price=14.46 vwap=13.73 vol=600.0 avg=863
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:28:00,865 | INFO | ATLX close 5.36
+2026-03-11 01:28:00,868 | INFO | ALMS close 28.055
+2026-03-11 01:28:00,879 | INFO | ALMS price=28.05 vwap=28.04 vol=2918.0 avg=544
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:28:00,882 | INFO | JBIO close 14.47
+2026-03-11 01:28:00,890 | INFO | JBIO price=14.47 vwap=14.57 vol=801.0 avg=189
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:29:00,848 | INFO | ALMS close 28.08
+2026-03-11 01:29:00,860 | INFO | ALMS price=28.08 vwap=28.04 vol=2198.0 avg=613
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:29:00,863 | INFO | ANET close 139.48
+2026-03-11 01:29:00,874 | INFO | ANET price=139.48 vwap=139.69 vol=2562.0 avg=870
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:29:00,877 | INFO | JBIO close 14.5
+2026-03-11 01:29:00,889 | INFO | JBIO price=14.50 vwap=14.56 vol=508.0 avg=205
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:29:00,892 | INFO | TENX close 14.53
+2026-03-11 01:29:00,902 | INFO | TENX price=14.53 vwap=13.74 vol=200.0 avg=827
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:30:00,549 | INFO | ALMS close 28.11
+2026-03-11 01:30:00,561 | INFO | ALMS price=28.11 vwap=28.05 vol=3541.0 avg=726
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:30:00,564 | INFO | ANET close 139.59
+2026-03-11 01:30:00,576 | INFO | ANET price=139.59 vwap=139.66 vol=7665.0 avg=1118
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:30:00,579 | INFO | TENX close 14.455
+2026-03-11 01:30:00,591 | INFO | TENX price=14.46 vwap=13.92 vol=4860.0 avg=1039
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+2026-03-11 01:30:00,594 | INFO | JBIO close 14.51
+2026-03-11 01:30:00,603 | INFO | JBIO price=14.51 vwap=14.56 vol=681.0 avg=228
+Index(['open', 'high', 'low', 'close', 'price', 'volume', 'vwap', 'ADX',
+       'avg_volume', 'rvol'],
+      dtype='object')
+^C^Ckeyboard interrupt, bye
+2026-03-11 01:43:58,241 | ERROR | Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at /home/sanjeev/.conda/envs/candles/lib/python3.10/site-packages/websockets/legacy/protocol.py:1324> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[gather.<locals>._done_callback() at /home/sanjeev/.conda/envs/candles/lib/python3.10/asyncio/tasks.py:720]>
+Exception ignored in: <coroutine object WebSocketCommonProtocol.close_connection at 0x79da3b573e60>
+Traceback (most recent call last):
+  File "/home/sanjeev/.conda/envs/candles/lib/python3.10/site-packages/websockets/legacy/protocol.py", line 1354, in close_connection
+    await self.close_transport()
+  File "/home/sanjeev/.conda/envs/candles/lib/python3.10/site-packages/websockets/legacy/protocol.py", line 1372, in close_transport
+    if await self.wait_for_connection_lost():
+  File "/home/sanjeev/.conda/envs/candles/lib/python3.10/site-packages/websockets/legacy/protocol.py", line 1397, in wait_for_connection_lost
+    await asyncio.wait_for(
+  File "/home/sanjeev/.conda/envs/candles/lib/python3.10/asyncio/tasks.py", line 405, in wait_for
+    loop = events.get_running_loop()
+RuntimeError: no running event loop
+(candles) sanjeev@sanjeev-Lenovo-B475:~/Documents/PYTHON/candlestick-screener$ python trading_bot5.py
+2026-03-11 01:44:02,929 | INFO | Bot initialized
+Loading historical bars...
+JBIO loaded 24 bars
+ANET loaded 87 bars
+ANTX loaded 52 bars
+ALMS loaded 43 bars
+ATLX loaded 9 bars
+TENX loaded 19 bars
+NSSC loaded 33 bars
+LMRI loaded 26 bars
+2026-03-11 01:44:04,715 | INFO | Scanning top movers...
+2026-03-11 01:44:05,662 | INFO | Top movers: ['TENX', 'ATLX', 'ALMS', 'ANTX', 'ANET']
+2026-03-11 01:44:05,662 | INFO | Subscribed to ['TENX', 'ATLX', 'ALMS', 'ANTX', 'ANET']
+2026-03-11 01:44:05,663 | INFO | started data stream
+2026-03-11 01:44:05,663 | INFO | starting data websocket connection
+2026-03-11 01:44:05,664 | INFO | connecting to wss://stream.data.alpaca.markets/v2/iex
+2026-03-11 01:44:07,582 | INFO | connected to wss://stream.data.alpaca.markets/v2/iex
+2026-03-11 01:44:07,902 | INFO | subscribed to bars: ['ALMS', 'ANET', 'ANTX', 'ATLX', 'TENX']

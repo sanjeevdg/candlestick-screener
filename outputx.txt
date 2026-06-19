@@ -1,0 +1,287 @@
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0293
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   NFLX   91.89   92.82  0.010121   TP
+1   QCOM  129.39  130.88  0.011516   TP
+2   AAPL  251.60  254.32  0.010811   TP
+3    CRM  186.13  185.55 -0.003116   SL
+
+Testing MOM=0.1, VOL=1.1, TP=0.01, SL=0.005
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0268
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   NFLX   91.89   92.82  0.010121   TP
+1   QCOM  129.39  130.88  0.011516   TP
+2   AAPL  251.60  254.32  0.010811   TP
+3    CRM  186.13  185.07 -0.005695   SL
+
+Testing MOM=0.1, VOL=1.1, TP=0.02, SL=0.003
+NFLX 93.14 3587627.0
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0580
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1   AAPL  251.60  256.705  0.020290   TP
+2    CRM  186.13  185.550 -0.003116   SL
+3   NFLX   91.89   93.765  0.020405   TP
+
+Testing MOM=0.1, VOL=1.1, TP=0.02, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0554
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1   AAPL  251.60  256.705  0.020290   TP
+2    CRM  186.13  185.070 -0.005695   SL
+3   NFLX   91.89   93.765  0.020405   TP
+
+Testing MOM=0.1, VOL=1.5, TP=0.01, SL=0.003
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0257
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   QCOM  129.39  130.88  0.011516   TP
+1    CRM  187.20  186.07 -0.006036   SL
+2   AAPL  252.87  255.41  0.010045   TP
+3   NFLX   92.46   93.40  0.010167   TP
+
+Testing MOM=0.1, VOL=1.5, TP=0.01, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0257
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   QCOM  129.39  130.88  0.011516   TP
+1    CRM  187.20  186.07 -0.006036   SL
+2   AAPL  252.87  255.41  0.010045   TP
+3   NFLX   92.46   93.40  0.010167   TP
+
+Testing MOM=0.1, VOL=1.5, TP=0.02, SL=0.003
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 50.00%
+Total PnL: 0.0311
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1    CRM  187.20  186.070 -0.006036   SL
+2   NFLX   92.46   94.340  0.020333   TP
+3   AAPL  252.87  251.950 -0.003638   SL
+
+Testing MOM=0.1, VOL=1.5, TP=0.02, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 50.00%
+Total PnL: 0.0297
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1    CRM  187.20  186.070 -0.006036   SL
+2   NFLX   92.46   94.340  0.020333   TP
+3   AAPL  252.87  251.600 -0.005022   SL
+
+Testing MOM=0.2, VOL=1.1, TP=0.01, SL=0.003
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0293
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   NFLX   91.89   92.82  0.010121   TP
+1   QCOM  129.39  130.88  0.011516   TP
+2   AAPL  251.60  254.32  0.010811   TP
+3    CRM  186.13  185.55 -0.003116   SL
+
+Testing MOM=0.2, VOL=1.1, TP=0.01, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0268
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   NFLX   91.89   92.82  0.010121   TP
+1   QCOM  129.39  130.88  0.011516   TP
+2   AAPL  251.60  254.32  0.010811   TP
+3    CRM  186.13  185.07 -0.005695   SL
+
+Testing MOM=0.2, VOL=1.1, TP=0.02, SL=0.003
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0580
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1   AAPL  251.60  256.705  0.020290   TP
+2    CRM  186.13  185.550 -0.003116   SL
+3   NFLX   91.89   93.765  0.020405   TP
+
+Testing MOM=0.2, VOL=1.1, TP=0.02, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0554
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1   AAPL  251.60  256.705  0.020290   TP
+2    CRM  186.13  185.070 -0.005695   SL
+3   NFLX   91.89   93.765  0.020405   TP
+
+Testing MOM=0.2, VOL=1.5, TP=0.01, SL=0.003
+
+NFLX 93.14 3587627.0
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0257
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   QCOM  129.39  130.88  0.011516   TP
+1    CRM  187.20  186.07 -0.006036   SL
+2   AAPL  252.87  255.41  0.010045   TP
+3   NFLX   92.46   93.40  0.010167   TP
+
+Testing MOM=0.2, VOL=1.5, TP=0.01, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 75.00%
+Total PnL: 0.0257
+
+Sample trades:
+  symbol   entry    exit       pnl type
+0   QCOM  129.39  130.88  0.011516   TP
+1    CRM  187.20  186.07 -0.006036   SL
+2   AAPL  252.87  255.41  0.010045   TP
+3   NFLX   92.46   93.40  0.010167   TP
+
+Testing MOM=0.2, VOL=1.5, TP=0.02, SL=0.003
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 50.00%
+Total PnL: 0.0311
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1    CRM  187.20  186.070 -0.006036   SL
+2   NFLX   92.46   94.340  0.020333   TP
+3   AAPL  252.87  251.950 -0.003638   SL
+
+Testing MOM=0.2, VOL=1.5, TP=0.02, SL=0.005
+
+Scanned: 15 | Candidates: 13
+FAIL STATS: {'no_data': 0, 'price': 0, 'volume': 2, 'range': 0, 'valid': 13}
+New symbols: {'WTI', 'SMCI', 'DKNG', 'BZ', 'CRM', 'NFLX', 'CRGY', 'AAPL', 'PR', 'QCOM'}
+
+===== RESULTS =====
+Trades: 4
+Win rate: 50.00%
+Total PnL: 0.0297
+
+Sample trades:
+  symbol   entry     exit       pnl type
+0   QCOM  129.39  132.035  0.020442   TP
+1    CRM  187.20  186.070 -0.006036   SL
+2   NFLX   92.46   94.340  0.020333   TP
+3   AAPL  252.87  251.600 -0.005022   SL
+
+===== BEST =====
+    momentum  volume    tp     sl       pnl
+2        0.1     1.1  0.02  0.003  0.058021
+10       0.2     1.1  0.02  0.003  0.058021
+3        0.1     1.1  0.02  0.005  0.055442
+11       0.2     1.1  0.02  0.005  0.055442
+6        0.1     1.5  0.02  0.003  0.031101

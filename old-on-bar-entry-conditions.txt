@@ -1,0 +1,104 @@
+ # -----------------------------------
+        # Indicators
+        # -----------------------------------
+
+        prices = df["price"].values.astype(float)
+        volumes = df["volume"].values.astype(float)
+        price = float(prices[-1])
+
+        price_series = df["price"]
+        prev_price = price_series.shift(1)
+
+        price = price_series.iloc[-1]          # current price (scalar)
+        prev_price_val = prev_price.iloc[-1]   # previous price (scalar)
+
+        # VWAP (manual)
+        #vwap = (prices * volumes).cumsum()[-1] / volumes.cumsum()[-1]
+
+        avg_volume = float(volumes.mean())
+
+        # momentum
+        momentum = prices[-1] - prices[-5]
+
+        # EMA (pandas is fine here)
+        ema20 = float(pd.Series(prices).ewm(span=20).mean().iloc[-1])
+        ema50 = float(pd.Series(prices).ewm(span=50).mean().iloc[-1])
+
+        # breakout (no high column → use price)
+        recent_high = float(pd.Series(prices).rolling(20).max().iloc[-2])
+        breakout = price > recent_high * 0.998
+
+        # -----------------------------------
+        # TA-Lib Indicators
+        # -----------------------------------
+
+
+        atr_series = ta.ATR(
+            df["high"].values,
+            df["low"].values,
+            df["close"].values,
+            timeperiod=14
+        )
+
+        # --- BASE SERIES ---
+        volume = df["volume"]
+        high = df["high"]
+        low = df["low"]
+
+        # --- PREVIOUS PRICE ---
+        
+
+        # --- VWAP RECLAIM ---
+        vwap_series = (price_series * df["volume"]).cumsum() / df["volume"].cumsum()
+
+        vwap = vwap_series.iloc[-1]
+
+        vwap_reclaim = (
+            prev_price_val < vwap and
+            price > vwap
+        )
+        #vwap_reclaim = (prev_price < vwap) & (price > vwap)
+
+        # --- RVOL ---
+        rvol = volume / avg_volume
+
+        # --- VOLUME SURGE ---
+        volume_surge = rvol > 1.0
+
+        # --- RANGE ---
+        range_candle = high - low
+        avg_range = range_candle.rolling(20).mean()
+
+        # --- RANGE EXPANSION ---
+        range_expansion = range_candle > avg_range * 1.3
+
+        # --- FINAL ENTRY SIGNAL ---
+        entry_signal = (
+            vwap_reclaim &
+            volume_surge &
+            range_expansion
+        )
+        # -----------------------------------
+        # FINAL ENTRY
+        # -----------------------------------
+        ''' 
+        log.info(f"rsi_condition {rsi_condition}")
+        log.info(f"macd_condition {macd_condition}")
+        log.info(f"breakout {breakout}")
+        log.info(f"volume_trend {volume_trend}")
+        log.info(f"momentum_acceleration {momentum_acceleration}")
+        log.info(f"compression {compression}")
+        log.info(f"trend {trend}")
+        log.info(f"no_chop {no_chop}")
+        
+        entry = (
+            compression and                  # setup before move
+            breakout and               # early positioning
+            volume_trend and                # increasing demand
+            momentum_acceleration and       # speed increasing
+            rsi_condition and    
+            macd_condition and                # strength
+            trend and                       # direction
+            no_chop                         # avoid sideways
+        )
+        '''
