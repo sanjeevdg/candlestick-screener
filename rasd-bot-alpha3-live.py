@@ -440,8 +440,9 @@ def check_entry(df,symbol):
     print('bullish=',bullish)
     print('breakout=',breakout)
     #trend_up and 
-
-    if pullback and bullish and breakout:
+    #pullback
+    #bullish
+    if trend_up and bullish and breakout:
     
         #if (last_price is None) or (price <= last_price - atr):
         return True, {
@@ -642,7 +643,7 @@ def place_order(symbol, side, qty, price,stop_loss,target):
             print(f"[SIM SELL] {symbol} @ {price} | PnL: {pnl}")
             
             if pnl < 0:
-                last_loss_price[symbol] = entry_price
+                last_loss_price[symbol] = entry
                         
             del sim_positions[symbol]
 
@@ -997,7 +998,7 @@ async def handle_bar(symbol, candle):
         )
 
         last_entry_price[symbol] = current_price
-        last_trade_bar[symbol] = bar.timestamp
+        last_trade_bar[symbol] = candle["timestamp"]
         last_breakout_price[symbol] = current_price
 
         print(f"ENTRY {symbol} @ {extra['entry_price']} ({extra.get('type','')}) - STOPLOSS== {extra['stop_loss']} - target={extra['target']}")
